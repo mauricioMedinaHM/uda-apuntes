@@ -133,7 +133,7 @@ const Information = () => {
               <div className="text-center">
                 <div className="w-32 h-32 mx-auto mb-4 rounded-full bg-gray-200 flex items-center justify-center">
                   <img 
-                    src="https://github.com/NegroHm.png" 
+                    src="https://github.com/mauricioMedinaHM" 
                     alt="Mauricio Medina"
                     className="w-32 h-32 rounded-full object-cover"
                   />
