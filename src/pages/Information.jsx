@@ -133,7 +133,7 @@ const Information = () => {
               <div className="text-center">
                 <div className="w-32 h-32 mx-auto mb-4 rounded-full bg-gray-200 flex items-center justify-center">
                   <img 
-                    src="https://github.com/mauricioMedinaHM" 
+                    src="https://github.com/mauricioMedinaHM.png" 
                     alt="Mauricio Medina"
                     className="w-32 h-32 rounded-full object-cover"
                   />
@@ -142,7 +142,7 @@ const Information = () => {
                   Mauricio Medina
                 </h3>
                 <a 
-                  href="https://github.com/NegroHm" 
+                  href="https://github.com/mauricioMedinaHM" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="inline-flex items-center px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
