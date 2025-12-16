@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { MagnifyingGlassIcon, Bars3Icon, XMarkIcon, SunIcon, MoonIcon } from '@heroicons/react/24/outline'
+import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react'
 import { useSearch } from '../context/SearchContext'
 import { useDarkMode } from '../contexts/DarkModeContext'
 
@@ -56,6 +57,18 @@ const Header = () => {
                 <MoonIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
               )}
             </button>
+            <div className="hidden md:flex items-center gap-2">
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-all duration-200 hover:-translate-y-0.5">
+                    Ingresar
+                  </span>
+                </SignInButton>
+              </SignedOut>
+              <SignedIn>
+                <UserButton />
+              </SignedIn>
+            </div>
             <a
               href="https://cafecito.app/apuntesuda" 
               target="_blank"
@@ -150,7 +163,21 @@ const Header = () => {
               </div>
 
               {/* Mobile Action Buttons */}
-              <div className="flex gap-3 mb-6">
+              <div className="flex flex-col gap-3 mb-6">
+                <div className="flex">
+                  <SignedOut>
+                    <SignInButton mode="modal">
+                      <span className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-all duration-200">
+                        Ingresar
+                      </span>
+                    </SignInButton>
+                  </SignedOut>
+                  <SignedIn>
+                    <div className="flex-1 flex items-center justify-center">
+                      <UserButton />
+                    </div>
+                  </SignedIn>
+                </div>
                 <a
                   href="https://cafecito.app/apuntesuda" 
                   target="_blank"

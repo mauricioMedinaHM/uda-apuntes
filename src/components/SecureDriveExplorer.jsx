@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { 
-  listPublicFiles as listFiles, 
-  searchPublicFiles as searchFiles, 
-  getPublicFileUrl, 
+  listCloudflareFiles as listFiles, 
+  searchCloudflareFiles as searchFiles, 
+  getCloudflareFileUrl, 
   isFolder,
   formatFileSize,
   formatDate,
   getFolderFileCount
-} from '../services/publicDrive';
-import { ArrowTopRightOnSquareIcon, MagnifyingGlassIcon, ArrowPathIcon, Squares2X2Icon, ListBulletIcon } from '@heroicons/react/24/outline';
+} from '../services/cloudflareDrive';
+import { ArrowTopRightOnSquareIcon, MagnifyingGlassIcon, Squares2X2Icon, ListBulletIcon } from '@heroicons/react/24/outline';
 import FileIcon from './FileIcon';
 import { SkeletonGrid } from './SkeletonLoader';
 
@@ -17,7 +17,7 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentFolder, setCurrentFolder] = useState(rootFolderId);
+  const [currentFolder, setCurrentFolder] = useState(rootFolderId || '');
   const [breadcrumbs, setBreadcrumbs] = useState([]);
   const [viewMode, setViewMode] = useState('grid');
   const [folderFileCounts, setFolderFileCounts] = useState({});
@@ -31,23 +31,34 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
   }, [currentFolder]);
 
   const loadFiles = async () => {
-    if (!currentFolder) return;
-    
     setLoading(true);
     setError(null);
     
     try {
       const fileList = await listFiles(currentFolder);
-      setFiles(fileList);
+      
+      // Normalizar los datos del endpoint al formato esperado por el componente
+      const normalizedFiles = fileList.map(file => ({
+        id: file.id,
+        name: file.nombre || file.name,
+        mimeType: file.mimeType,
+        modifiedTime: file.ultimaModificacion || file.modifiedTime,
+        size: file.tamaño || file.size,
+        path: file.path || file.id,
+        url: file.url,
+        isFolder: file.isFolder || file.tipo === 'carpeta'
+      }));
+      
+      setFiles(normalizedFiles);
       
       // Get file counts for folders
-      const folders = fileList.filter(file => isFolder(file));
+      const folders = normalizedFiles.filter(file => isFolder(file));
       const counts = {};
       
       await Promise.all(
         folders.map(async (folder) => {
           try {
-            const count = await getFolderFileCount(folder.id);
+            const count = await getFolderFileCount(folder.path || folder.id);
             counts[folder.id] = count;
           } catch (error) {
             console.error(`Error getting count for folder ${folder.name}:`, error);
@@ -59,8 +70,8 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
       setFolderFileCounts(counts);
     } catch (error) {
       console.error('Error loading files:', error);
-      setError(error.message);
-      
+      // No mostrar error, solo loguear
+      setError(null);
     } finally {
       setLoading(false);
     }
@@ -89,19 +100,22 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
   const handleFolderClick = (folder) => {
     if (!isFolder(folder)) return;
     
-    setCurrentFolder(folder.id);
-    setBreadcrumbs([...breadcrumbs, { id: folder.id, name: folder.name }]);
+    const folderPath = folder.path || folder.id;
+    setCurrentFolder(folderPath);
+    setBreadcrumbs([...breadcrumbs, { id: folder.id, name: folder.name, path: folderPath }]);
     setSearchTerm('');
   };
 
   const handleBreadcrumbClick = (index) => {
     if (index === -1) {
-      setCurrentFolder(rootFolderId);
+      // Volver a la raíz (apuntes/)
+      setCurrentFolder('');
       setBreadcrumbs([]);
     } else {
       const newBreadcrumbs = breadcrumbs.slice(0, index + 1);
       setBreadcrumbs(newBreadcrumbs);
-      setCurrentFolder(newBreadcrumbs[newBreadcrumbs.length - 1].id);
+      const lastCrumb = newBreadcrumbs[newBreadcrumbs.length - 1];
+      setCurrentFolder(lastCrumb.path || lastCrumb.id);
     }
     setSearchTerm('');
   };
@@ -110,14 +124,14 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
     if (isFolder(file)) {
       handleFolderClick(file);
     } else {
-      // Open file in new tab
-      window.open(getPublicFileUrl(file.id), '_blank');
+      // Open file in new tab usando la URL del archivo
+      const fileUrl = file.url || getCloudflareFileUrl(file);
+      if (fileUrl && fileUrl !== '#') {
+        window.open(fileUrl, '_blank');
+      }
     }
   };
 
-  const handleRetry = () => {
-    loadFiles();
-  };
 
 
   return (
@@ -233,27 +247,6 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
           </div>
         )}
 
-        {/* Error State */}
-        {error && (
-          <div className="bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-6 mb-8 animate-slide-in">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-full">
-                <span className="text-2xl">⚠️</span>
-              </div>
-              <div>
-                <h4 className="font-bold text-red-800 dark:text-red-300">Error de conexión</h4>
-                <p className="text-red-700 dark:text-red-400">{error}</p>
-              </div>
-            </div>
-            <button
-              onClick={handleRetry}
-              className="px-6 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-xl hover:from-red-600 hover:to-pink-600 transition-all duration-300 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center gap-2"
-            >
-              <ArrowPathIcon className="w-5 h-5" />
-              Intentar de nuevo
-            </button>
-          </div>
-        )}
 
         {/* Loading State */}
         {loading && (
@@ -273,7 +266,7 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
         )}
 
         {/* Files Display */}
-        {!loading && !error && (
+        {!loading && (
           <div className="animate-fade-in">
             {files.length === 0 ? (
               <div className="text-center py-16">

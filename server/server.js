@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import driveRoutes from './routes/drive.js';
+import apuntesRoutes from './routes/apuntes.js';
 
 // Load environment variables
 dotenv.config();
@@ -48,6 +49,9 @@ app.get('/health', (req, res) => {
 
 // Drive API routes
 app.use('/api/drive', driveRoutes);
+
+// Apuntes API routes (Cloudflare R2)
+app.use('/api/apuntes', apuntesRoutes);
 
 // Error handling middleware
 app.use((error, req, res, next) => {

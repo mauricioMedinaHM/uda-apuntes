@@ -66,7 +66,7 @@ const Home = () => {
 
         {/* Secure Drive Explorer */}
         <div className="max-w-7xl mx-auto">
-          <SecureDriveExplorer rootFolderId="1oOYF9Od5NeSErp7lokq95pQ37voukBvu" />
+          <SecureDriveExplorer rootFolderId="" />
         </div>
 
         {/* Features Section - Minimalist */}

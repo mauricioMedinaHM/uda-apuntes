@@ -21,7 +21,8 @@ const FileIcon = ({ mimeType, fileName, isFolder, size = "w-8 h-8" }) => {
 
   const getIconByMimeType = (mimeType, fileName) => {
     // Folder
-    if (mimeType === 'application/vnd.google-apps.folder') {
+    if (mimeType === 'application/vnd.google-apps.folder' || 
+        mimeType === 'application/vnd.cloudflare.folder') {
       return <FolderIcon className={`${size} text-blue-500`} />;
     }
 
