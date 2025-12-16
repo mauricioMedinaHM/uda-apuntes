@@ -1,13 +1,12 @@
+// CRITICAL: Import config FIRST to load environment variables
+import './config.js';
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import dotenv from 'dotenv';
 import driveRoutes from './routes/drive.js';
 import apuntesRoutes from './routes/apuntes.js';
-
-// Load environment variables
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -40,10 +39,10 @@ app.use(express.json({ limit: '10mb' }));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV 
+    environment: process.env.NODE_ENV
   });
 });
 

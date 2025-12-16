@@ -6,13 +6,13 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
  */
 export const listCloudflareFiles = async (folderPath = '') => {
   try {
-    // Construir el prefix: si está vacío, mostrar carpetas dentro de 'apuntes/'
+    // Construir el prefix: si está vacío, mostrar carpetas en la raíz del bucket
     // Si tiene valor, usar ese path directamente
-    const prefix = folderPath || 'apuntes/';
-    
-    // Asegurar que termine con '/' si es una carpeta
-    const normalizedPrefix = prefix.endsWith('/') ? prefix : `${prefix}/`;
-    
+    const prefix = folderPath || '';
+
+    // Asegurar que termine con '/' si es una carpeta, pero NO agregar '/' si está vacío
+    const normalizedPrefix = prefix && !prefix.endsWith('/') ? `${prefix}/` : prefix;
+
     const url = `${API_BASE_URL || ''}/api/apuntes?prefix=${encodeURIComponent(normalizedPrefix)}`;
 
     const response = await fetch(url, {
@@ -28,7 +28,7 @@ export const listCloudflareFiles = async (folderPath = '') => {
     }
 
     const data = await response.json();
-    
+
     // La respuesta ya viene en el formato correcto desde el endpoint
     return data.archivos || [];
   } catch (error) {
@@ -44,7 +44,7 @@ export const listCloudflareFiles = async (folderPath = '') => {
 export const searchCloudflareFiles = async (folderPath, searchTerm) => {
   try {
     const files = await listCloudflareFiles(folderPath);
-    
+
     // Filtrar por término de búsqueda (usar nombre o nombre según el formato)
     const searchLower = searchTerm.toLowerCase();
     return files.filter(file => {
@@ -65,13 +65,13 @@ export const getCloudflareFileUrl = (file) => {
   if (file.url) {
     return file.url;
   }
-  
+
   // Si tiene path, construir URL (fallback)
   if (file.path) {
     // Esta URL debería venir del endpoint, pero por si acaso:
     return `#`;
   }
-  
+
   return '#';
 };
 
@@ -138,13 +138,13 @@ export const isFolder = (file) => {
  */
 export const formatFileSize = (bytes) => {
   if (!bytes || bytes === '0' || bytes === 0) return '-';
-  
+
   const numBytes = parseInt(bytes);
   if (isNaN(numBytes)) return '-';
-  
+
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(numBytes) / Math.log(1024));
-  
+
   if (i === 0) return `${numBytes} ${sizes[i]}`;
   return `${(numBytes / Math.pow(1024, i)).toFixed(1)} ${sizes[i]}`;
 };
@@ -154,7 +154,7 @@ export const formatFileSize = (bytes) => {
  */
 export const formatDate = (dateString) => {
   if (!dateString) return '-';
-  
+
   try {
     const date = new Date(dateString);
     return date.toLocaleDateString('es-ES', {

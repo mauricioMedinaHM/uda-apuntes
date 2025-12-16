@@ -1,5 +1,10 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+import dotenv from 'dotenv'
+import path from 'path'
+
+// Cargar variables de entorno desde server/.env.local
+dotenv.config({ path: path.resolve(__dirname, './server/.env.local') })
 
 // Plugin para excluir la carpeta api/ del procesamiento de módulos (solo imports, no peticiones HTTP)
 const excludeApiPlugin = () => {
@@ -28,6 +33,10 @@ const excludeApiPlugin = () => {
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), excludeApiPlugin()],
+  // Exponer variables de entorno que empiezan con VITE_ al frontend
+  define: {
+    'import.meta.env.VITE_CLERK_PUBLISHABLE_KEY': JSON.stringify(process.env.VITE_CLERK_PUBLISHABLE_KEY)
+  },
   build: {
     rollupOptions: {
       output: {

@@ -1,9 +1,5 @@
 import express from 'express';
-import dotenv from 'dotenv';
 import { S3Client, ListObjectsV2Command } from "@aws-sdk/client-s3";
-
-// Cargar variables de entorno
-dotenv.config();
 
 // Extraer variables y hacer logging seguro (sin mostrar valores)
 const {
@@ -70,27 +66,23 @@ function getMimeType(filename) {
 router.get('/', async (req, res) => {
   try {
     // Obtener el prefix de la query string (para filtrar por carpeta)
-    const prefix = req.query.prefix || 'apuntes/';
-    
-    // Asegurar que siempre empiece con 'apuntes/' y termine con '/' si es carpeta
-    const normalizedPrefix = prefix.startsWith('apuntes/') 
-      ? prefix 
-      : `apuntes/${prefix}`;
-    
+    const prefix = req.query.prefix || '';
+
     // Pedimos la lista de archivos al bucket con el prefix
     const command = new ListObjectsV2Command({
       Bucket: process.env.R2_BUCKET_NAME,
-      Prefix: normalizedPrefix,
+      Prefix: prefix,
       Delimiter: '/', // Esto ayuda a separar carpetas de archivos
     });
 
     const data = await S3.send(command);
 
     // Procesar carpetas (CommonPrefixes) y archivos (Contents)
-    const carpetas = (data.CommonPrefixes || []).map((prefix) => {
-      const nombreCarpeta = prefix.Prefix.replace(normalizedPrefix, '').replace(/\/$/, '');
+    const carpetas = (data.CommonPrefixes || []).map((commonPrefix) => {
+      // commonPrefix.Prefix ya incluye el prefix de la query
+      const nombreCarpeta = commonPrefix.Prefix.replace(prefix, '').replace(/\/$/, '');
       return {
-        id: prefix.Prefix,
+        id: commonPrefix.Prefix,
         nombre: nombreCarpeta,
         tipo: 'carpeta',
         mimeType: 'application/vnd.cloudflare.folder',
@@ -103,16 +95,16 @@ router.get('/', async (req, res) => {
     const archivos = (data.Contents || [])
       .filter((file) => {
         // Excluir si es una "carpeta" (termina en /) o está en una subcarpeta
-        const relativePath = file.Key.replace(normalizedPrefix, '');
+        const relativePath = file.Key.replace(prefix, '');
         return !file.Key.endsWith('/') && !relativePath.includes('/');
       })
       .map((file) => {
         const nombreArchivo = file.Key.split('/').pop();
         const mimeType = getMimeType(nombreArchivo);
-        const urlPublica = PUBLIC_BASE_URL 
-          ? `${PUBLIC_BASE_URL}/${file.Key}` 
+        const urlPublica = PUBLIC_BASE_URL
+          ? `${PUBLIC_BASE_URL}/${file.Key}`
           : `https://${process.env.R2_BUCKET_NAME}.${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${file.Key}`;
-        
+
         return {
           id: file.Key,
           nombre: nombreArchivo,
@@ -135,15 +127,15 @@ router.get('/', async (req, res) => {
 
     return res.status(200).json({
       archivos: resultado,
-      prefix: normalizedPrefix,
+      prefix: prefix,
       total: resultado.length,
     });
 
   } catch (error) {
     console.error('Error en /api/apuntes:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: "Error al obtener apuntes",
-      message: error.message 
+      message: error.message
     });
   }
 });
