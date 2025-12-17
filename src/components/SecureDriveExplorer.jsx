@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
-import { 
-  listCloudflareFiles as listFiles, 
-  searchCloudflareFiles as searchFiles, 
-  getCloudflareFileUrl, 
+import {
+  listCloudflareFiles as listFiles,
+  searchCloudflareFiles as searchFiles,
+  getCloudflareFileUrl,
   isFolder,
   formatFileSize,
   formatDate,
   getFolderFileCount
 } from '../services/cloudflareDrive';
-import { ArrowTopRightOnSquareIcon, MagnifyingGlassIcon, Squares2X2Icon, ListBulletIcon } from '@heroicons/react/24/outline';
+import { ArrowTopRightOnSquareIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import FileIcon from './FileIcon';
 import { SkeletonGrid } from './SkeletonLoader';
 
@@ -19,7 +19,6 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentFolder, setCurrentFolder] = useState(rootFolderId || '');
   const [breadcrumbs, setBreadcrumbs] = useState([]);
-  const [viewMode, setViewMode] = useState('grid');
   const [folderFileCounts, setFolderFileCounts] = useState({});
 
   const truncateName = (name, maxLength = 12) => {
@@ -33,10 +32,10 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
   const loadFiles = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const fileList = await listFiles(currentFolder);
-      
+
       // Normalizar los datos del endpoint al formato esperado por el componente
       const normalizedFiles = fileList.map(file => ({
         id: file.id,
@@ -48,13 +47,13 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
         url: file.url,
         isFolder: file.isFolder || file.tipo === 'carpeta'
       }));
-      
+
       setFiles(normalizedFiles);
-      
+
       // Get file counts for folders
       const folders = normalizedFiles.filter(file => isFolder(file));
       const counts = {};
-      
+
       await Promise.all(
         folders.map(async (folder) => {
           try {
@@ -66,7 +65,7 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
           }
         })
       );
-      
+
       setFolderFileCounts(counts);
     } catch (error) {
       console.error('Error loading files:', error);
@@ -82,10 +81,10 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
       loadFiles();
       return;
     }
-    
+
     setLoading(true);
     setError(null);
-    
+
     try {
       const results = await searchFiles(currentFolder, searchTerm);
       setFiles(results);
@@ -99,7 +98,7 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
 
   const handleFolderClick = (folder) => {
     if (!isFolder(folder)) return;
-    
+
     const folderPath = folder.path || folder.id;
     setCurrentFolder(folderPath);
     setBreadcrumbs([...breadcrumbs, { id: folder.id, name: folder.name, path: folderPath }]);
@@ -147,7 +146,7 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
               <p className="text-gray-600 dark:text-gray-300">Explora y descarga los apuntes organizados por carrera</p>
             </div>
           </div>
-          
+
         </div>
 
         {/* Search Bar and View Toggle */}
@@ -174,7 +173,7 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
               </button>
               {searchTerm && (
                 <button
-                  onClick={() => {setSearchTerm(''); loadFiles();}}
+                  onClick={() => { setSearchTerm(''); loadFiles(); }}
                   className="flex-1 sm:flex-none px-4 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium transition-all duration-200 hover:-translate-y-0.5"
                 >
                   Limpiar
@@ -182,37 +181,11 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
               )}
             </div>
           </div>
-          
-          {/* View Toggle */}
-          <div className="flex items-center justify-between">
+
+          {/* File count display */}
+          <div className="flex items-center justify-between mb-6">
             <div className="text-sm text-gray-600 dark:text-gray-400">
               {files.length > 0 && `${files.length} elemento${files.length !== 1 ? 's' : ''}`}
-            </div>
-            <div className="flex rounded-lg border border-gray-300 dark:border-gray-600 p-1 bg-white dark:bg-gray-700">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`flex items-center px-3 py-2 rounded-md transition-colors text-sm font-medium ${
-                  viewMode === 'grid'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
-                }`}
-                title="Vista en cuadrícula"
-              >
-                <Squares2X2Icon className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Cuadrícula</span>
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`flex items-center px-3 py-2 rounded-md transition-colors text-sm font-medium ${
-                  viewMode === 'list'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
-                }`}
-                title="Vista horizontal"
-              >
-                <ListBulletIcon className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Lista</span>
-              </button>
             </div>
           </div>
         </div>
@@ -265,178 +238,134 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
           </div>
         )}
 
-        {/* Files Display */}
+        {/* Files Display - Two Panel Layout */}
         {!loading && (
           <div className="animate-fade-in">
             {files.length === 0 ? (
               <div className="text-center py-16">
                 <div className="mb-6">
-                  <div className="inline-flex p-6 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-full mb-4">
+                  <div className="inline-flex p-6 bg-gray-100 dark:bg-gray-800 rounded-2xl mb-4">
                     <span className="text-6xl">📂</span>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-700 dark:text-gray-300 mb-2">No se encontraron archivos</h3>
-                  <p className="text-gray-500 dark:text-gray-400 text-lg">
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">No se encontraron elementos</h3>
+                  <p className="text-gray-500 dark:text-gray-400">
                     {searchTerm ? 'Intenta con otros términos de búsqueda' : 'Esta carpeta está vacía'}
                   </p>
                 </div>
               </div>
-            ) : viewMode === 'grid' ? (
-              // Grid View
-              <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
-                {files.map((file, index) => (
-                  <div
-                    key={file.id}
-                    onClick={() => handleFileClick(file)}
-                    className="group bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 md:p-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md animate-fade-in min-h-[160px] sm:min-h-[180px] flex flex-col justify-between"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    <div className="flex items-center justify-between mb-3 md:mb-4">
-                      <div className="flex-shrink-0 p-2 md:p-3 bg-gray-100 dark:bg-gray-700 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 rounded-lg transition-all duration-200">
-                        <FileIcon 
-                          mimeType={file.mimeType} 
-                          fileName={file.name} 
-                          isFolder={isFolder(file)} 
-                          size="w-6 h-6 md:w-8 md:h-8" 
-                        />
-                      </div>
-                      {!isFolder(file) && (
-                        <ArrowTopRightOnSquareIcon className="w-4 h-4 md:w-5 md:h-5 text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 group-hover:text-blue-500 transition-all duration-300" />
-                      )}
-                    </div>
-                    
-                    <h3 className="font-bold text-gray-900 dark:text-white mb-2 md:mb-3 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors duration-300 text-sm md:text-base leading-tight" 
-                        title={file.name}
-                        style={{
-                          display: '-webkit-box',
-                          WebkitLineClamp: 3,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                          wordWrap: 'break-word',
-                          overflowWrap: 'break-word'
-                        }}>
-                      {file.name}
-                    </h3>
-                    
-                    <div className="space-y-1.5 md:space-y-2 text-xs md:text-sm">
-                      {isFolder(file) && folderFileCounts[file.id] !== undefined && (
-                        <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
-                          <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-blue-400 rounded-full"></span>
-                          <span className="font-medium text-xs sm:text-sm">{folderFileCounts[file.id]} archivos</span>
-                        </div>
-                      )}
-                      {file.size && (
-                        <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                          <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-purple-400 rounded-full"></span>
-                          <span className="text-xs sm:text-sm">{formatFileSize(file.size)}</span>
-                        </div>
-                      )}
-                      {file.modifiedTime && (
-                        <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                          <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-400 rounded-full"></span>
-                          <span className="text-xs sm:text-sm">{formatDate(file.modifiedTime)}</span>
-                        </div>
-                      )}
-                      <div className="mt-3 md:mt-4 pt-2 md:pt-3 border-t border-gray-200 dark:border-gray-700 group-hover:border-blue-200 dark:group-hover:border-blue-600">
-                        <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 group-hover:bg-blue-700 text-white rounded-lg text-xs md:text-sm font-medium transition-all duration-200">
-                          {isFolder(file) ? (
-                            <>
-                              <span>📁</span>
-                              <span className="hidden sm:inline">Abrir carpeta</span>
-                              <span className="sm:hidden">Abrir</span>
-                            </>
-                          ) : (
-                            <>
-                              <span>📄</span>
-                              <span className="hidden sm:inline">Ver archivo</span>
-                              <span className="sm:hidden">Ver</span>
-                            </>
-                          )}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
             ) : (
-              // List View
-              <div className="space-y-3">
-                {files.map((file, index) => (
-                  <div
-                    key={file.id}
-                    onClick={() => handleFileClick(file)}
-                    className="group bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer border border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-md animate-fade-in flex items-center gap-3 sm:gap-4"
-                    style={{ animationDelay: `${index * 30}ms` }}
-                  >
-                    {/* File Icon */}
-                    <div className="flex-shrink-0 p-2 sm:p-3 bg-gray-100 dark:bg-gray-700 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 rounded-lg transition-all duration-200">
-                      <FileIcon 
-                        mimeType={file.mimeType} 
-                        fileName={file.name} 
-                        isFolder={isFolder(file)} 
-                        size="w-5 h-5 sm:w-6 sm:h-6" 
-                      />
-                    </div>
-                    
-                    {/* File Info */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-gray-900 dark:text-white group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors duration-300 text-base md:text-lg mb-1 leading-tight" 
-                          title={file.name}
-                          style={{
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                            wordWrap: 'break-word',
-                            overflowWrap: 'break-word'
-                          }}>
-                        {file.name}
-                      </h3>
-                      
-                      <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                        {isFolder(file) && folderFileCounts[file.id] !== undefined && (
-                          <span className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium">
-                            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-400 rounded-full flex-shrink-0"></span>
-                            {folderFileCounts[file.id]} archivos
-                          </span>
-                        )}
-                        {file.size && (
-                          <span className="inline-flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-purple-400 rounded-full flex-shrink-0"></span>
-                            {formatFileSize(file.size)}
-                          </span>
-                        )}
-                        {file.modifiedTime && (
-                          <span className="inline-flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-400 rounded-full flex-shrink-0"></span>
-                            {formatDate(file.modifiedTime)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Action Button */}
-                    <div className="flex-shrink-0 flex items-center gap-2 sm:gap-3">
-                      <span className="inline-flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 group-hover:bg-blue-700 text-white rounded-lg text-xs sm:text-sm font-medium transition-all duration-200">
-                        {isFolder(file) ? (
-                          <>
-                            <span>📁</span>
-                            <span className="hidden sm:inline">Abrir carpeta</span>
-                            <span className="sm:hidden">Abrir</span>
-                          </>
-                        ) : (
-                          <>
-                            <span>📄</span>
-                            <span className="hidden sm:inline">Ver archivo</span>
-                            <span className="sm:hidden">Ver</span>
-                          </>
-                        )}
-                      </span>
-                      {!isFolder(file) && (
-                        <ArrowTopRightOnSquareIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 group-hover:text-blue-500 transition-all duration-300" />
-                      )}
-                    </div>
+              // Two-panel layout: Folders on left, Files on right
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Left Panel: Folders */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-700">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">📁 Carpetas</h3>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                      {files.filter(f => isFolder(f)).length}
+                    </span>
                   </div>
-                ))}
+
+                  <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+                    {files.filter(f => isFolder(f)).length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-gray-400 dark:text-gray-500 text-sm">No hay carpetas</p>
+                      </div>
+                    ) : (
+                      files.filter(f => isFolder(f)).map((folder, index) => (
+                        <div
+                          key={folder.id}
+                          onClick={() => handleFolderClick(folder)}
+                          className="group bg-white dark:bg-gray-800 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 animate-fade-in"
+                          style={{ animationDelay: `${index * 30}ms` }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="flex-shrink-0 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 transition-colors">
+                              <FileIcon
+                                mimeType={folder.mimeType}
+                                fileName={folder.name}
+                                isFolder={true}
+                                size="w-6 h-6"
+                              />
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                                {folder.name}
+                              </h4>
+                              {folderFileCounts[folder.id] !== undefined && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                  {folderFileCounts[folder.id]} archivos
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="flex-shrink-0">
+                              <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
+                                <span className="text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">›</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Right Panel: Files */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-700">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">📄 Archivos</h3>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                      {files.filter(f => !isFolder(f)).length}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+                    {files.filter(f => !isFolder(f)).length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-gray-400 dark:text-gray-500 text-sm">No hay archivos</p>
+                      </div>
+                    ) : (
+                      files.filter(f => !isFolder(f)).map((file, index) => (
+                        <div
+                          key={file.id}
+                          onClick={() => handleFileClick(file)}
+                          className="group bg-white dark:bg-gray-800 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 animate-fade-in"
+                          style={{ animationDelay: `${index * 30}ms` }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="flex-shrink-0 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-colors">
+                              <FileIcon
+                                mimeType={file.mimeType}
+                                fileName={file.name}
+                                isFolder={false}
+                                size="w-6 h-6"
+                              />
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 text-sm leading-tight">
+                                {file.name}
+                              </h4>
+                              <div className="flex items-center gap-3 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                {file.size && (
+                                  <span>{formatFileSize(file.size)}</span>
+                                )}
+                                {file.modifiedTime && (
+                                  <span>{formatDate(file.modifiedTime)}</span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex-shrink-0">
+                              <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>

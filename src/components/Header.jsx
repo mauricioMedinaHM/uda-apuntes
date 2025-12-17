@@ -32,9 +32,9 @@ const Header = () => {
         <div className="flex items-center justify-between py-4">
           <Link to="/" className="flex items-center space-x-4 group">
             <div className="w-14 h-14 flex items-center justify-center group-hover:scale-105 transition-all duration-300">
-              <img 
-                src="/Logo.png" 
-                alt="APUNTES UDA" 
+              <img
+                src="/Logo.png"
+                alt="APUNTES UDA"
                 className="w-full h-full object-contain"
               />
             </div>
@@ -70,7 +70,7 @@ const Header = () => {
               </SignedIn>
             </div>
             <a
-              href="https://cafecito.app/apuntesuda" 
+              href="https://cafecito.app/apuntesuda"
               target="_blank"
               rel="noopener noreferrer"
               className="hidden md:flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:-translate-y-0.5"
@@ -89,26 +89,32 @@ const Header = () => {
 
           <div className="hidden md:flex items-center space-x-6">
             <nav className="flex space-x-1">
-              <Link 
-                to="/" 
+              <Link
+                to="/"
                 className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Inicio
               </Link>
-              <Link 
-                to="/ranking" 
+              <Link
+                to="/archivos"
+                className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Archivos
+              </Link>
+              <Link
+                to="/ranking"
                 className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Ranking
               </Link>
-              <Link 
-                to="/information" 
+              <Link
+                to="/information"
                 className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Información
               </Link>
-              <Link 
-                to="/contact" 
+              <Link
+                to="/contact"
                 className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Contacto
@@ -179,7 +185,7 @@ const Header = () => {
                   </SignedIn>
                 </div>
                 <a
-                  href="https://cafecito.app/apuntesuda" 
+                  href="https://cafecito.app/apuntesuda"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1 flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-3 rounded-lg font-medium transition-all duration-200"
@@ -204,6 +210,13 @@ const Header = () => {
                   className="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 font-medium"
                 >
                   🏠 Inicio
+                </Link>
+                <Link
+                  to="/archivos"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 font-medium"
+                >
+                  📁 Archivos
                 </Link>
                 <Link
                   to="/ranking"

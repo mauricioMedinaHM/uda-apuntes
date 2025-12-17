@@ -7,6 +7,7 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import driveRoutes from './routes/drive.js';
 import apuntesRoutes from './routes/apuntes.js';
+import favoritesRoutes from './routes/favorites.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -51,6 +52,9 @@ app.use('/api/drive', driveRoutes);
 
 // Apuntes API routes (Cloudflare R2)
 app.use('/api/apuntes', apuntesRoutes);
+
+// Favorites API routes
+app.use('/api/favorites', favoritesRoutes);
 
 // Error handling middleware
 app.use((error, req, res, next) => {

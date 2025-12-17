@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.952.0",
+    "@clerk/express": "^1.7.58",
+    "archiver": "^7.0.1",
+    "axios": "^1.13.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
