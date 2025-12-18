@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 import {
   listCloudflareFiles as listFiles,
   searchCloudflareFiles as searchFiles,
@@ -6,13 +7,18 @@ import {
   isFolder,
   formatFileSize,
   formatDate,
-  getFolderFileCount
+  getFolderFileCount,
+  getFolderFileCountRecursive
 } from '../services/cloudflareDrive';
-import { ArrowTopRightOnSquareIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { ArrowTopRightOnSquareIcon, MagnifyingGlassIcon, ArrowLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { StarIcon } from '@heroicons/react/24/outline';
+import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 import FileIcon from './FileIcon';
 import { SkeletonGrid } from './SkeletonLoader';
+import { toggleFavorite, isFavorite } from '../services/favoritesService';
 
-const SecureDriveExplorer = ({ rootFolderId }) => {
+const SecureDriveExplorer = ({ rootFolderId, favorites = [], onFavoritesChange, onPreview }) => {
+  const { getToken, isSignedIn } = useAuth();
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -20,6 +26,7 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
   const [currentFolder, setCurrentFolder] = useState(rootFolderId || '');
   const [breadcrumbs, setBreadcrumbs] = useState([]);
   const [folderFileCounts, setFolderFileCounts] = useState({});
+  const [folderSubfolderCounts, setFolderSubfolderCounts] = useState({});
 
   const truncateName = (name, maxLength = 12) => {
     if (name.length <= maxLength) return name;
@@ -50,23 +57,33 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
 
       setFiles(normalizedFiles);
 
-      // Get file counts for folders
+      // Get RECURSIVE file and subfolder counts for folders
       const folders = normalizedFiles.filter(file => isFolder(file));
-      const counts = {};
+      const fileCounts = {};
+      const subfolderCounts = {};
 
       await Promise.all(
         folders.map(async (folder) => {
           try {
-            const count = await getFolderFileCount(folder.path || folder.id);
-            counts[folder.id] = count;
+            // Get DIRECT contents of this folder for subfolder count
+            const folderContents = await listFiles(folder.path || folder.id);
+            const subfolders = folderContents.filter(item => item.isFolder || item.tipo === 'carpeta');
+
+            // Get RECURSIVE file count (all files in this folder and all subfolders)
+            const totalFiles = await getFolderFileCountRecursive(folder.path || folder.id);
+
+            fileCounts[folder.id] = totalFiles;
+            subfolderCounts[folder.id] = subfolders.length;
           } catch (error) {
             console.error(`Error getting count for folder ${folder.name}:`, error);
-            counts[folder.id] = 0;
+            fileCounts[folder.id] = 0;
+            subfolderCounts[folder.id] = 0;
           }
         })
       );
 
-      setFolderFileCounts(counts);
+      setFolderFileCounts(fileCounts);
+      setFolderSubfolderCounts(subfolderCounts);
     } catch (error) {
       console.error('Error loading files:', error);
       // No mostrar error, solo loguear
@@ -105,10 +122,28 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
     setSearchTerm('');
   };
 
+  const handleGoBack = () => {
+    if (breadcrumbs.length === 0) return;
+
+    if (breadcrumbs.length === 1) {
+      // Si solo hay 1 breadcrumb, volver al rootFolderId (nivel mínimo)
+      // Esto evita llegar a una carpeta raíz vacía
+      setCurrentFolder(rootFolderId || '');
+      setBreadcrumbs([]);
+    } else {
+      // Go back to previous folder
+      const newBreadcrumbs = breadcrumbs.slice(0, -1);
+      const previousFolder = newBreadcrumbs[newBreadcrumbs.length - 1];
+      setBreadcrumbs(newBreadcrumbs);
+      setCurrentFolder(previousFolder.path || previousFolder.id);
+    }
+    setSearchTerm('');
+  };
+
   const handleBreadcrumbClick = (index) => {
     if (index === -1) {
-      // Volver a la raíz (apuntes/)
-      setCurrentFolder('');
+      // Volver al nivel mínimo (rootFolderId), NO a la raíz vacía
+      setCurrentFolder(rootFolderId || '');
       setBreadcrumbs([]);
     } else {
       const newBreadcrumbs = breadcrumbs.slice(0, index + 1);
@@ -119,14 +154,39 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
     setSearchTerm('');
   };
 
+  const handleToggleFavorite = async (file, e) => {
+    e.stopPropagation();
+
+    if (!isSignedIn) {
+      alert('Debes iniciar sesión para guardar favoritos');
+      return;
+    }
+
+    try {
+      const token = await getToken();
+      await toggleFavorite(file, favorites, token);
+      if (onFavoritesChange) {
+        onFavoritesChange();
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      alert('Error al actualizar favoritos');
+    }
+  };
+
   const handleFileClick = (file) => {
     if (isFolder(file)) {
       handleFolderClick(file);
     } else {
-      // Open file in new tab usando la URL del archivo
-      const fileUrl = file.url || getCloudflareFileUrl(file);
-      if (fileUrl && fileUrl !== '#') {
-        window.open(fileUrl, '_blank');
+      // Preview or open file
+      if (onPreview) {
+        onPreview(file);
+      } else {
+        // Open file in new tab using the URL from file
+        const fileUrl = file.url || getCloudflareFileUrl(file);
+        if (fileUrl && fileUrl !== '#') {
+          window.open(fileUrl, '_blank');
+        }
       }
     }
   };
@@ -137,20 +197,11 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
     <div className="w-full animate-fade-in">
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 md:p-8">
         <div className="mb-8">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-              <div className="w-8 h-8 text-blue-600">📚</div>
-            </div>
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Apuntes Universitarios</h2>
-              <p className="text-gray-600 dark:text-gray-300">Explora y descarga los apuntes organizados por carrera</p>
-            </div>
-          </div>
 
         </div>
 
         {/* Search Bar and View Toggle */}
-        <div className="flex flex-col gap-4 mb-6 md:mb-8">
+        <div className="flex flex-col gap-4 mb-2 md:mb-1">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 relative">
               <input
@@ -182,59 +233,92 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
             </div>
           </div>
 
-          {/* File count display */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              {files.length > 0 && `${files.length} elemento${files.length !== 1 ? 's' : ''}`}
+          {/* File/Folder count display */}
+          <div className="flex items-center justify-end mb-6">
+            <div className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+              {files.length > 0 && (
+                <span>
+                  {files.filter(f => isFolder(f)).length > 0 && `${files.filter(f => isFolder(f)).length} carpeta${files.filter(f => isFolder(f)).length !== 1 ? 's' : ''}`}
+                  {files.filter(f => isFolder(f)).length > 0 && files.filter(f => !isFolder(f)).length > 0 && ', '}
+                  {files.filter(f => !isFolder(f)).length > 0 && `${files.filter(f => !isFolder(f)).length} archivo${files.filter(f => !isFolder(f)).length !== 1 ? 's' : ''}`}
+                </span>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Breadcrumbs */}
+        {/* Breadcrumbs & Current Location */}
         {breadcrumbs.length > 0 && (
-          <div className="mb-8 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl border-2 border-blue-100 dark:border-blue-800 animate-slide-in">
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="mb-8 space-y-3">
+            {/* Breadcrumb Navigation */}
+            <div className="flex flex-wrap items-center gap-2 text-sm">
               <button
                 onClick={() => handleBreadcrumbClick(-1)}
-                className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md text-sm flex-shrink-0"
+                className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
                 title="Volver al inicio"
               >
-                <span className="text-lg">🏠</span>
-                <span className="hidden sm:inline">Inicio</span>
+                🏠 Inicio
               </button>
               {breadcrumbs.map((crumb, index) => (
                 <div key={crumb.id} className="flex items-center gap-2">
-                  <span className="text-gray-400 text-lg flex-shrink-0">›</span>
+                  <ChevronRightIcon className="w-4 h-4 text-gray-400" />
                   <button
                     onClick={() => handleBreadcrumbClick(index)}
-                    className="px-3 py-2 bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md text-sm flex-shrink-0"
+                    className={`hover:text-blue-600 dark:hover:text-blue-400 font-medium transition-colors ${index === breadcrumbs.length - 1
+                      ? 'text-gray-900 dark:text-white cursor-default'
+                      : 'text-gray-600 dark:text-gray-400'
+                      }`}
                     title={crumb.name}
                   >
-                    <span className="block max-w-[80px] sm:max-w-[120px] md:max-w-[150px] truncate">
-                      {truncateName(crumb.name)}
+                    <span className="max-w-[120px] md:max-w-[200px] truncate block">
+                      {crumb.name}
                     </span>
                   </button>
                 </div>
               ))}
             </div>
+
+            {/* Current Location Card */}
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center gap-3">
+                {/* Back Button */}
+                <button
+                  onClick={handleGoBack}
+                  className="p-2 bg-blue-100 dark:bg-blue-900/40 hover:bg-blue-200 dark:hover:bg-blue-800/60 rounded-lg transition-all duration-200 hover:-translate-x-1"
+                  title="Volver atrás"
+                >
+                  <ArrowLeftIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </button>
+
+                {/* Folder Icon */}
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg">
+                  <span className="text-2xl">📂</span>
+                </div>
+
+                {/* Folder Name */}
+                <div className="flex-1">
+                  <h3 className="font-bold text-gray-900 dark:text-white text-lg">
+                    {breadcrumbs[breadcrumbs.length - 1].name}
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Ubicación actual
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
 
-        {/* Loading State */}
+        {/* Loading State - Minimalist */}
         {loading && (
-          <div className="animate-fade-in">
-            <div className="flex items-center justify-center py-12 mb-8">
-              <div className="relative">
-                <div className="animate-spin-slow rounded-full h-16 w-16 border-4 border-blue-100"></div>
-                <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent absolute top-0 left-0"></div>
-              </div>
-              <div className="ml-6">
-                <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300">Cargando archivos...</h3>
-                <p className="text-gray-500 dark:text-gray-400">Esto puede tomar unos segundos</p>
-              </div>
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="flex gap-2 mb-4">
+              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+              <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
             </div>
-            <SkeletonGrid count={8} />
+            <p className="text-sm text-gray-500 dark:text-gray-400">Cargando archivos...</p>
           </div>
         )}
 
@@ -254,84 +338,85 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
                 </div>
               </div>
             ) : (
-              // Two-panel layout: Folders on left, Files on right
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Left Panel: Folders */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">📁 Carpetas</h3>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      {files.filter(f => isFolder(f)).length}
-                    </span>
-                  </div>
+              // Responsive grid layout - All folders visible
+              <div className="space-y-8">
+                {/* Folders Section */}
+                {files.filter(f => isFolder(f)).length > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between pb-4 mb-6 border-b border-gray-200 dark:border-gray-700">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">📁 Carpetas</h3>
+                      <span className="text-sm font-medium px-3 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full">
+                        {files.filter(f => isFolder(f)).length}
+                      </span>
+                    </div>
 
-                  <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
-                    {files.filter(f => isFolder(f)).length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-gray-400 dark:text-gray-500 text-sm">No hay carpetas</p>
-                      </div>
-                    ) : (
-                      files.filter(f => isFolder(f)).map((folder, index) => (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                      {files.filter(f => isFolder(f)).map((folder, index) => (
                         <div
                           key={folder.id}
                           onClick={() => handleFolderClick(folder)}
-                          className="group bg-white dark:bg-gray-800 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 animate-fade-in"
-                          style={{ animationDelay: `${index * 30}ms` }}
+                          className="group bg-white dark:bg-gray-800 rounded-xl p-5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-lg animate-fade-in"
+                          style={{ animationDelay: `${index * 20}ms` }}
                         >
-                          <div className="flex items-center gap-3">
-                            <div className="flex-shrink-0 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 transition-colors">
+                          <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0 p-2.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 transition-colors">
                               <FileIcon
                                 mimeType={folder.mimeType}
                                 fileName={folder.name}
                                 isFolder={true}
-                                size="w-6 h-6"
+                                size="w-7 h-7"
                               />
                             </div>
 
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                              <h4 className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 leading-tight mb-2">
                                 {folder.name}
                               </h4>
-                              {folderFileCounts[folder.id] !== undefined && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                  {folderFileCounts[folder.id]} archivos
-                                </p>
-                              )}
+                              <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                                {folderSubfolderCounts[folder.id] !== undefined && folderSubfolderCounts[folder.id] > 0 && (
+                                  <span className="flex items-center gap-1">
+                                    <span>📁</span>
+                                    <span>{folderSubfolderCounts[folder.id]}</span>
+                                  </span>
+                                )}
+                                {folderFileCounts[folder.id] !== undefined && (
+                                  <span className="flex items-center gap-1">
+                                    <span>📄</span>
+                                    <span>{folderFileCounts[folder.id]}</span>
+                                  </span>
+                                )}
+                              </div>
                             </div>
 
                             <div className="flex-shrink-0">
-                              <div className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
-                                <span className="text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">›</span>
+                              <div className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
+                                <span className="text-sm text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">›</span>
                               </div>
                             </div>
                           </div>
                         </div>
-                      ))
-                    )}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {/* Right Panel: Files */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">📄 Archivos</h3>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      {files.filter(f => !isFolder(f)).length}
-                    </span>
-                  </div>
+                {/* Files Section */}
+                {files.filter(f => !isFolder(f)).length > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between pb-4 mb-6 border-b border-gray-200 dark:border-gray-700">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">📄 Archivos</h3>
+                      <span className="text-sm font-medium px-3 py-1 bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full">
+                        {files.filter(f => !isFolder(f)).length}
+                      </span>
+                    </div>
 
-                  <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
-                    {files.filter(f => !isFolder(f)).length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-gray-400 dark:text-gray-500 text-sm">No hay archivos</p>
-                      </div>
-                    ) : (
-                      files.filter(f => !isFolder(f)).map((file, index) => (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {files.filter(f => !isFolder(f)).map((file, index) => (
                         <div
                           key={file.id}
                           onClick={() => handleFileClick(file)}
-                          className="group bg-white dark:bg-gray-800 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 animate-fade-in"
-                          style={{ animationDelay: `${index * 30}ms` }}
+                          className="group bg-white dark:bg-gray-800 rounded-xl p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-lg animate-fade-in"
+                          style={{ animationDelay: `${index * 20}ms` }}
                         >
                           <div className="flex items-center gap-3">
                             <div className="flex-shrink-0 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-colors">
@@ -357,15 +442,30 @@ const SecureDriveExplorer = ({ rootFolderId }) => {
                               </div>
                             </div>
 
+                            {/* Favorite Star Button */}
+                            {isSignedIn && (
+                              <button
+                                onClick={(e) => handleToggleFavorite(file, e)}
+                                className="flex-shrink-0 p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                                title={isFavorite(file.id || file.path, favorites) ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+                              >
+                                {isFavorite(file.id || file.path, favorites) ? (
+                                  <StarIconSolid className="w-5 h-5 text-yellow-500" />
+                                ) : (
+                                  <StarIcon className="w-5 h-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+                                )}
+                              </button>
+                            )}
+
                             <div className="flex-shrink-0">
                               <ArrowTopRightOnSquareIcon className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
                             </div>
                           </div>
                         </div>
-                      ))
-                    )}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             )}
           </div>

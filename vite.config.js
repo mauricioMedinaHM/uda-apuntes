@@ -54,6 +54,10 @@ export default defineConfig({
     port: 3003,
     host: true,
     historyApiFallback: true,
+    allowedHosts: [
+      'localhost',
+      '.trycloudflare.com',  // Permitir túneles de Cloudflare
+    ],
     // Proxy para redirigir /api/* al servidor Express en desarrollo
     proxy: {
       '/api': {

@@ -55,11 +55,51 @@ function getMimeType(filename) {
     'png': 'image/png',
     'gif': 'image/gif',
     'zip': 'application/zip',
-    'rar': 'application/x-rar-compressed',
     'mp4': 'video/mp4',
     'mp3': 'audio/mpeg',
   };
   return mimeTypes[ext] || 'application/octet-stream';
+}
+
+/**
+ * Verificar si una key es una carpeta
+ */
+function isFolder(key) {
+  return key.endsWith('/');
+}
+
+/**
+ * Contar recursivamente TODOS los archivos dentro de una carpeta (incluyendo subcarpetas)
+ * @param {string} prefix - Prefijo de la carpeta (ej: "apuntes/Derecho/")
+ * @returns {Promise<number>} - Número total de archivos
+ */
+async function countFilesRecursively(prefix) {
+  let totalFiles = 0;
+  let continuationToken = null;
+
+  try {
+    do {
+      const command = new ListObjectsV2Command({
+        Bucket: R2_BUCKET_NAME,
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+      });
+
+      const response = await S3.send(command);
+
+      if (response.Contents) {
+        // Contar solo archivos (no carpetas)
+        totalFiles += response.Contents.filter(item => !isFolder(item.Key)).length;
+      }
+
+      continuationToken = response.NextContinuationToken;
+    } while (continuationToken);
+
+    return totalFiles;
+  } catch (error) {
+    console.error(`Error counting files in ${prefix}:`, error);
+    return 0;
+  }
 }
 
 // GET /api/apuntes
@@ -86,7 +126,7 @@ router.get('/', async (req, res) => {
         nombre: nombreCarpeta,
         tipo: 'carpeta',
         mimeType: 'application/vnd.cloudflare.folder',
-        path: prefix.Prefix,
+        path: commonPrefix.Prefix,
         isFolder: true,
       };
     });
@@ -135,6 +175,26 @@ router.get('/', async (req, res) => {
     console.error('Error en /api/apuntes:', error);
     return res.status(500).json({
       error: "Error al obtener apuntes",
+      message: error.message
+    });
+  }
+});
+
+// GET /api/apuntes/count-files
+// Endpoint para contar recursivamente archivos en una carpeta
+router.get('/count-files', async (req, res) => {
+  try {
+    const prefix = req.query.prefix || '';
+    const count = await countFilesRecursively(prefix);
+
+    return res.status(200).json({
+      prefix: prefix,
+      totalFiles: count
+    });
+  } catch (error) {
+    console.error('Error counting files:', error);
+    return res.status(500).json({
+      error: "Error al contar archivos",
       message: error.message
     });
   }

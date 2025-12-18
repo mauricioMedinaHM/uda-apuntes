@@ -170,15 +170,52 @@ export const formatDate = (dateString) => {
 };
 
 /**
- * Get file count for a folder
+ * Obtener el número de archivos en una carpeta (sin recursión, solo directos)
+ * @param {string} folderId - ID o path de la carpeta
+ * @returns {Promise<number>} - Número de archivos
  */
-export const getFolderFileCount = async (folderPath) => {
+export const getFolderFileCount = async (folderId) => {
   try {
-    const files = await listCloudflareFiles(folderPath);
+    // Reemplazado axios por fetch para consistencia con el resto del archivo
+    const url = `${API_BASE_URL || ''}/api/apuntes?prefix=${encodeURIComponent(folderId)}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
     // Contar solo archivos, no carpetas
-    return files.filter(file => !file.isFolder).length;
+    const files = data.archivos || [];
+    return files.filter(item => !item.isFolder).length;
   } catch (error) {
     console.error('Error getting folder file count:', error);
+    return 0;
+  }
+};
+
+/**
+ * Obtener el número TOTAL de archivos en una carpeta de forma RECURSIVA (incluyendo subcarpetas)
+ * @param {string} folderId - ID o path de la carpeta
+ * @returns {Promise<number>} - Número total de archivos en la carpeta y todas sus subcarpetas
+ */
+export const getFolderFileCountRecursive = async (folderId) => {
+  try {
+    // Reemplazado axios por fetch para consistencia con el resto del archivo
+    const url = `${API_BASE_URL || ''}/api/apuntes/count-files?prefix=${encodeURIComponent(folderId)}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.totalFiles || 0;
+  } catch (error) {
+    console.error('Error getting recursive folder file count:', error);
     return 0;
   }
 };

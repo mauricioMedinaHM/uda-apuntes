@@ -24,7 +24,13 @@ export const config = {
     R2_ACCOUNT_ID: process.env.R2_ACCOUNT_ID,
     R2_BUCKET_NAME: process.env.R2_BUCKET_NAME,
     R2_PUBLIC_URL: process.env.R2_PUBLIC_URL,
+    CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
+    CLERK_PUBLISHABLE_KEY: process.env.CLERK_PUBLISHABLE_KEY,
     PORT: process.env.PORT || 3001,
     FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3003',
     NODE_ENV: process.env.NODE_ENV || 'development'
 };
+
+// Log Clerk keys status (sin mostrar el valor completo)
+console.log('[Clerk] CLERK_SECRET_KEY:', process.env.CLERK_SECRET_KEY ? '[CARGADO]' : '[NO ENCONTRADO]');
+console.log('[Clerk] CLERK_PUBLISHABLE_KEY:', process.env.CLERK_PUBLISHABLE_KEY ? '[CARGADO]' : '[NO ENCONTRADO]');

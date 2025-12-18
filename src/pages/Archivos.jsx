@@ -3,7 +3,7 @@ import { useAuth } from '@clerk/clerk-react';
 import SecureDriveExplorer from '../components/SecureDriveExplorer';
 import FavoritesBar from '../components/FavoritesBar';
 import FilePreviewModal from '../components/FilePreviewModal';
-import { getFavorites } from '../services/favoritesService';
+import { getFavorites, toggleFavorite, isFavorite } from '../services/favoritesService';
 
 const Archivos = () => {
     const { getToken, isSignedIn } = useAuth();
@@ -39,6 +39,17 @@ const Archivos = () => {
         setPreviewFile(null);
     };
 
+    const handleToggleFavorite = async (file) => {
+        try {
+            const token = await getToken();
+            await toggleFavorite(file, favorites, token);
+            await loadFavorites();
+        } catch (error) {
+            console.error('Error toggling favorite:', error);
+            alert('Error al actualizar favoritos');
+        }
+    };
+
     return (
         <div className="min-h-screen bg-white dark:bg-gray-900">
             <div className="container mx-auto px-4 py-8">
@@ -63,7 +74,7 @@ const Archivos = () => {
                     </div>
                 )}
 
-                {/* File Explorer */}
+                {/* SecureDriveExplorer with Favorites */}
                 <SecureDriveExplorer
                     rootFolderId=""
                     favorites={favorites}
@@ -71,7 +82,7 @@ const Archivos = () => {
                     onPreview={handlePreview}
                 />
 
-                {/* Preview Modal */}
+                {/* File Preview Modal */}
                 {previewFile && (
                     <FilePreviewModal
                         file={previewFile}
