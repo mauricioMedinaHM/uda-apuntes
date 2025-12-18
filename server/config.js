@@ -31,6 +31,9 @@ export const config = {
     NODE_ENV: process.env.NODE_ENV || 'development'
 };
 
+// Also export as default for easier importing
+export default config;
+
 // Log Clerk keys status (sin mostrar el valor completo)
 console.log('[Clerk] CLERK_SECRET_KEY:', process.env.CLERK_SECRET_KEY ? '[CARGADO]' : '[NO ENCONTRADO]');
 console.log('[Clerk] CLERK_PUBLISHABLE_KEY:', process.env.CLERK_PUBLISHABLE_KEY ? '[CARGADO]' : '[NO ENCONTRADO]');

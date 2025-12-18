@@ -1,32 +1,44 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/clerk-react';
 import {
-  listCloudflareFiles as listFiles,
-  searchCloudflareFiles as searchFiles,
+  listCloudflareFiles,
+  searchCloudflareFiles,
   getCloudflareFileUrl,
   isFolder,
   formatFileSize,
   formatDate,
-  getFolderFileCount,
   getFolderFileCountRecursive
 } from '../services/cloudflareDrive';
-import { ArrowTopRightOnSquareIcon, MagnifyingGlassIcon, ArrowLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
-import { StarIcon } from '@heroicons/react/24/outline';
-import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
-import FileIcon from './FileIcon';
-import { SkeletonGrid } from './SkeletonLoader';
+import { uploadFileToFolder, deleteFile } from '../services/uploadService';
 import { toggleFavorite, isFavorite } from '../services/favoritesService';
+import FileIcon from './FileIcon';
+import {
+  MagnifyingGlassIcon,
+  ArrowLeftIcon,
+  ChevronRightIcon,
+  StarIcon,
+  ArrowTopRightOnSquareIcon,
+  CloudArrowUpIcon,
+  XMarkIcon
+} from '@heroicons/react/24/outline';
+import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
+import { SkeletonGrid } from './SkeletonLoader';
 
-const SecureDriveExplorer = ({ rootFolderId, favorites = [], onFavoritesChange, onPreview }) => {
+const SecureDriveExplorer = ({ rootFolderId = '', favorites = [], onFavoritesChange, onPreview }) => {
   const { getToken, isSignedIn } = useAuth();
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentFolder, setCurrentFolder] = useState(rootFolderId || '');
+  const [currentFolderId, setCurrentFolderId] = useState(rootFolderId);
   const [breadcrumbs, setBreadcrumbs] = useState([]);
   const [folderFileCounts, setFolderFileCounts] = useState({});
   const [folderSubfolderCounts, setFolderSubfolderCounts] = useState({});
+
+  // Upload state
+  const [dragOverFolder, setDragOverFolder] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ show: false, fileName: '', progress: 0 });
 
   const truncateName = (name, maxLength = 12) => {
     if (name.length <= maxLength) return name;
@@ -34,17 +46,16 @@ const SecureDriveExplorer = ({ rootFolderId, favorites = [], onFavoritesChange, 
   };
   useEffect(() => {
     loadFiles();
-  }, [currentFolder]);
+  }, [currentFolderId]);
 
   const loadFiles = async () => {
-    setLoading(true);
-    setError(null);
-
     try {
-      const fileList = await listFiles(currentFolder);
+      setLoading(true);
+      setError(null);
+      const data = await listCloudflareFiles(currentFolderId);
 
       // Normalizar los datos del endpoint al formato esperado por el componente
-      const normalizedFiles = fileList.map(file => ({
+      const normalizedFiles = data.map(file => ({
         id: file.id,
         name: file.nombre || file.name,
         mimeType: file.mimeType,
@@ -103,7 +114,7 @@ const SecureDriveExplorer = ({ rootFolderId, favorites = [], onFavoritesChange, 
     setError(null);
 
     try {
-      const results = await searchFiles(currentFolder, searchTerm);
+      const results = await searchCloudflareFiles(currentFolderId, searchTerm);
       setFiles(results);
     } catch (error) {
       console.error('Error searching files:', error);
@@ -117,7 +128,7 @@ const SecureDriveExplorer = ({ rootFolderId, favorites = [], onFavoritesChange, 
     if (!isFolder(folder)) return;
 
     const folderPath = folder.path || folder.id;
-    setCurrentFolder(folderPath);
+    setCurrentFolderId(folderPath);
     setBreadcrumbs([...breadcrumbs, { id: folder.id, name: folder.name, path: folderPath }]);
     setSearchTerm('');
   };
@@ -171,6 +182,72 @@ const SecureDriveExplorer = ({ rootFolderId, favorites = [], onFavoritesChange, 
     } catch (error) {
       console.error('Error toggling favorite:', error);
       alert('Error al actualizar favoritos');
+    }
+  };
+
+  // Drag & Drop Handlers
+  const handleDragEnter = (e, folderId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isSignedIn) {
+      setDragOverFolder(folderId);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragLeave = (e, folderId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (dragOverFolder === folderId) {
+      setDragOverFolder(null);
+    }
+  };
+
+  const handleDrop = async (e, folder) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverFolder(null);
+
+    if (!isSignedIn) {
+      alert('Debes iniciar sesión para subir archivos');
+      return;
+    }
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length === 0) return;
+
+    const folderPath = folder.path || folder.id;
+
+    for (const file of files) {
+      try {
+        setUploading(true);
+        setUploadProgress({ show: true, fileName: file.name, progress: 0 });
+
+        const token = await getToken();
+        await uploadFileToFolder(file, folderPath, token);
+
+        setUploadProgress({ show: true, fileName: file.name, progress: 100 });
+
+        // Wait a moment to show success
+        setTimeout(() => {
+          setUploadProgress({ show: false, fileName: '', progress: 0 });
+          setUploading(false);
+          // Reload files if we're in this folder
+          if (currentFolderId === folderPath || currentFolderId === folder.id) {
+            loadFiles();
+          }
+        }, 1000);
+
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        alert(`Error al subir ${file.name}: ${error.message}`);
+        setUploading(false);
+        setUploadProgress({ show: false, fileName: '', progress: 0 });
+      }
     }
   };
 
@@ -266,6 +343,29 @@ const SecureDriveExplorer = ({ rootFolderId, favorites = [], onFavoritesChange, 
         )}
       </div>
 
+      {/* Upload Progress Indicator */}
+      {uploadProgress.show && (
+        <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 animate-fade-in">
+          <div className="flex items-center gap-3">
+            {uploadProgress.progress === 100 ? (
+              <div className="flex-shrink-0 w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-xl">✓</span>
+              </div>
+            ) : (
+              <div className="flex-shrink-0 w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center animate-pulse">
+                <CloudArrowUpIcon className="w-6 h-6 text-white" />
+              </div>
+            )}
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                {uploadProgress.progress === 100 ? '✅ Archivo subido!' : 'Subiendo archivo...'}
+              </p>
+              <p className="text-xs text-gray-600 dark:text-gray-300">{uploadProgress.fileName}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Error State */}
       {error && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
@@ -318,7 +418,14 @@ const SecureDriveExplorer = ({ rootFolderId, favorites = [], onFavoritesChange, 
                       <div
                         key={folder.id}
                         onClick={() => handleFolderClick(folder)}
-                        className="group bg-white dark:bg-gray-800 rounded-xl p-5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-lg animate-fade-in"
+                        onDragEnter={(e) => handleDragEnter(e, folder.id)}
+                        onDragOver={handleDragOver}
+                        onDragLeave={(e) => handleDragLeave(e, folder.id)}
+                        onDrop={(e) => handleDrop(e, folder)}
+                        className={`group bg-white dark:bg-gray-800 rounded-xl p-5 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 cursor-pointer border-2 hover:shadow-lg animate-fade-in ${dragOverFolder === folder.id && isSignedIn
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500'
+                          }`}
                         style={{ animationDelay: `${index * 20}ms` }}
                       >
                         <div className="flex items-start gap-3">
@@ -352,9 +459,15 @@ const SecureDriveExplorer = ({ rootFolderId, favorites = [], onFavoritesChange, 
                           </div>
 
                           <div className="flex-shrink-0">
-                            <div className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
-                              <span className="text-sm text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">›</span>
-                            </div>
+                            {dragOverFolder === folder.id && isSignedIn ? (
+                              <div className="w-7 h-7 flex items-center justify-center rounded-full bg-blue-500 text-white">
+                                <CloudArrowUpIcon className="w-4 h-4" />
+                              </div>
+                            ) : (
+                              <div className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
+                                <span className="text-sm text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">›</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>

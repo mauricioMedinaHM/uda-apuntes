@@ -18,7 +18,8 @@
     "express": "^4.18.2",
     "express-rate-limit": "^7.1.5",
     "googleapis": "^156.0.0",
-    "helmet": "^7.1.0"
+    "helmet": "^7.1.0",
+    "multer": "^2.0.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

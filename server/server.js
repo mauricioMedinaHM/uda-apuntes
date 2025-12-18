@@ -8,6 +8,7 @@ import rateLimit from 'express-rate-limit';
 import driveRoutes from './routes/drive.js';
 import apuntesRoutes from './routes/apuntes.js';
 import favoritesRoutes from './routes/favorites.js';
+import uploadRoutes from './routes/upload.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -50,11 +51,10 @@ app.get('/health', (req, res) => {
 // Drive API routes
 app.use('/api/drive', driveRoutes);
 
-// Apuntes API routes (Cloudflare R2)
+// Apuntes API routes (Cloudflare// API Routes
 app.use('/api/apuntes', apuntesRoutes);
-
-// Favorites API routes
 app.use('/api/favorites', favoritesRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Error handling middleware
 app.use((error, req, res, next) => {
