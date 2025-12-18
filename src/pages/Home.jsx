@@ -79,31 +79,6 @@ const Home = () => {
 
         {/* Features Section - Minimalist */}
         <div className="mt-20 animate-fade-in">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="text-center p-6 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200">
-              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-3xl">📁</span>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Organizado</h3>
-              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">Archivos organizados por carrera, semestre y materia para fácil acceso</p>
-            </div>
-
-            <div className="text-center p-6 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-3xl">⭐</span>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Favoritos</h3>
-              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">Guarda tus archivos importantes y descárgalos todos de una vez en ZIP</p>
-            </div>
-
-            <div className="text-center p-6 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200">
-              <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-3xl">👁️</span>
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Vista Previa</h3>
-              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">Previsualiza archivos antes de descargarlos para encontrar lo que necesitas</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
