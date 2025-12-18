@@ -34,7 +34,7 @@ const FavoritesBar = ({ favorites, onFavoritesChange, onPreview }) => {
 
     if (!favorites || favorites.length === 0) {
         return (
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center gap-3 mb-2">
                     <StarIcon className="w-5 h-5 text-yellow-500" />
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Favoritos</h2>

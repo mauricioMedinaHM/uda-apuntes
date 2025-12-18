@@ -69,11 +69,15 @@ export const addFavorite = async (file, token) => {
  */
 export const removeFavorite = async (fileId, token) => {
     try {
-        await axios.delete(`${API_URL}/api/favorites/${fileId}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
+        await axios.post(`${API_URL}/api/favorites/remove`,
+            { fileId },
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             }
-        });
+        );
         return true;
     } catch (error) {
         console.error('Error removing favorite:', error);

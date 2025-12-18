@@ -125,6 +125,46 @@ router.delete('/:fileId', async (req, res) => {
 });
 
 /**
+ * POST /api/favorites/remove
+ * Remove a file from favorites using fileId in request body (handles special chars better)
+ */
+router.post('/remove', async (req, res) => {
+    try {
+        const { userId } = getAuth(req);
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const { fileId } = req.body;
+
+        if (!fileId) {
+            return res.status(400).json({ error: 'fileId is required' });
+        }
+
+        // Get current favorites from Clerk metadata
+        const user = await clerkClient.users.getUser(userId);
+        const favorites = user.publicMetadata?.favorites || [];
+
+        // Remove the favorite
+        const updatedFavorites = favorites.filter(fav => fav.file_id !== fileId);
+
+        // Update user metadata
+        await clerkClient.users.updateUserMetadata(userId, {
+            publicMetadata: {
+                ...user.publicMetadata,
+                favorites: updatedFavorites
+            }
+        });
+
+        return res.json({ success: true });
+    } catch (error) {
+        console.error('Error removing favorite:', error);
+        return res.status(500).json({ error: 'Failed to remove favorite' });
+    }
+});
+
+/**
  * GET /api/favorites/download-zip
  * Download all favorites as a ZIP file
  */
