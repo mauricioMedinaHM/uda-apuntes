@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useAuth } from '@clerk/clerk-react';
+import { useAuth, useUser } from '@clerk/clerk-react';
 import {
   listCloudflareFiles,
   searchCloudflareFiles,
@@ -27,6 +27,8 @@ import { SkeletonGrid } from './SkeletonLoader';
 
 const SecureDriveExplorer = ({ rootFolderId = '', favorites = [], onFavoritesChange, onPreview }) => {
   const { getToken, isSignedIn, userId } = useAuth();
+  const { user } = useUser();
+  const isAdmin = user?.publicMetadata?.role === 'admin';
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -645,17 +647,29 @@ const SecureDriveExplorer = ({ rootFolderId = '', favorites = [], onFavoritesCha
                               </div>
                             </div>
 
-                            {/* Delete Button (owner only) - Based on file path/name pattern */}
-                            {isSignedIn && file.id && file.id.includes(userId) && (
+                            {/* Delete Button (owner or admin) */}
+                            {isSignedIn && (file.id && file.id.includes(userId) || isAdmin) && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleDeleteFile(file);
                                 }}
-                                className="flex-shrink-0 p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                                title="Eliminar archivo"
+                                className={`flex-shrink-0 p-2 rounded-lg transition-colors ${isAdmin && (!file.id || !file.id.includes(userId))
+                                    ? 'hover:bg-orange-100 dark:hover:bg-orange-900/30'
+                                    : 'hover:bg-red-100 dark:hover:bg-red-900/30'
+                                  }`}
+                                title={
+                                  isAdmin && (!file.id || !file.id.includes(userId))
+                                    ? '🔑 Eliminar archivo (Admin)'
+                                    : 'Eliminar archivo'
+                                }
                               >
-                                <XMarkIcon className="w-5 h-5 text-red-600 dark:text-red-400" />
+                                <XMarkIcon
+                                  className={`w-5 h-5 ${isAdmin && (!file.id || !file.id.includes(userId))
+                                      ? 'text-orange-600 dark:text-orange-400'
+                                      : 'text-red-600 dark:text-red-400'
+                                    }`}
+                                />
                               </button>
                             )}
 

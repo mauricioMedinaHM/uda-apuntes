@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
-import { requireAuth } from '@clerk/express';
+import { requireAuth, clerkClient } from '@clerk/express';
 import config from '../config.js';
 
 const { R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_ENDPOINT, R2_BUCKET_NAME, R2_PUBLIC_URL } = config;
@@ -115,7 +115,7 @@ router.post('/', requireAuth(), upload.single('file'), async (req, res) => {
 
 /**
  * DELETE /api/upload/:fileKey
- * Delete a file (only if user is the owner)
+ * Delete a file (owner or admin only)
  */
 router.delete('/:fileKey(*)', requireAuth(), async (req, res) => {
     try {
@@ -123,6 +123,10 @@ router.delete('/:fileKey(*)', requireAuth(), async (req, res) => {
         const userId = req.auth.userId;
 
         console.log(`🗑️  Delete request for: ${fileKey} by user: ${userId}`);
+
+        // Get user from Clerk to check admin role
+        const user = await clerkClient.users.getUser(userId);
+        const isAdmin = user.publicMetadata?.role === 'admin';
 
         // Check file ownership
         const headCommand = new HeadObjectCommand({
@@ -133,9 +137,15 @@ router.delete('/:fileKey(*)', requireAuth(), async (req, res) => {
         const headResult = await s3Client.send(headCommand);
         const fileOwnerId = headResult.Metadata['owner-id'];
 
-        if (fileOwnerId !== userId) {
+        // Allow deletion if user is admin OR file owner
+        if (!isAdmin && fileOwnerId !== userId) {
             console.log(`❌ Unauthorized delete attempt: user ${userId} tried to delete file owned by ${fileOwnerId}`);
             return res.status(403).json({ error: 'No tienes permisos para eliminar este archivo' });
+        }
+
+        // Log admin deletions for security audit
+        if (isAdmin && fileOwnerId !== userId) {
+            console.log(`🔑 ADMIN DELETE: User ${userId} (admin) deleted file owned by ${fileOwnerId}`);
         }
 
         // Delete from R2
