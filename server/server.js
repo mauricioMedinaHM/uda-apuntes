@@ -9,6 +9,7 @@ import driveRoutes from './routes/drive.js';
 import apuntesRoutes from './routes/apuntes.js';
 import favoritesRoutes from './routes/favorites.js';
 import uploadRoutes from './routes/upload.js';
+import rankingAutoUpdateRoutes from './routes/rankingAutoUpdate.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -55,6 +56,7 @@ app.use('/api/drive', driveRoutes);
 app.use('/api/apuntes', apuntesRoutes);
 app.use('/api/favorites', favoritesRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/ranking-update', rankingAutoUpdateRoutes);
 
 // Error handling middleware
 app.use((error, req, res, next) => {

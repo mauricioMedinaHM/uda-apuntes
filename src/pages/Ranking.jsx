@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { TrophyIcon, DocumentIcon, PhotoIcon, PresentationChartBarIcon, ClockIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
+import { TrophyIcon, DocumentIcon, PhotoIcon, PresentationChartBarIcon, ClockIcon, ChevronDownIcon, ChevronUpIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
 import RankingJsonService from '../services/rankingJsonService'
 
 // Componente de ranking minimalista con vista expandible
@@ -10,6 +10,7 @@ const Ranking = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [expandedCards, setExpandedCards] = useState(new Set())
+  const [updateStatus, setUpdateStatus] = useState(null)
 
   // Función para expandir/colapsar tarjetas
   const toggleCard = (careerId) => {
@@ -24,11 +25,11 @@ const Ranking = () => {
 
   useEffect(() => {
     console.log('🏆 Ranking component mounted - Cargando JSON estático')
-    
+
     const loadRankingData = async () => {
       setLoading(true)
       setError(null)
-      
+
       try {
         // Solo cargar el JSON estático, sin análisis
         console.log('📊 Cargando datos desde JSON estático...')
@@ -44,7 +45,23 @@ const Ranking = () => {
     }
 
     loadRankingData()
+
+    // Verificar estado de actualización
+    checkUpdateStatus()
   }, [])
+
+  // Verificar si hay actualización pendiente
+  const checkUpdateStatus = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/ranking-update/status`)
+      if (response.ok) {
+        const status = await response.json()
+        setUpdateStatus(status)
+      }
+    } catch (error) {
+      console.error('Error checking update status:', error)
+    }
+  }
 
   const getRankIcon = (rank) => {
     switch (rank) {
@@ -67,8 +84,8 @@ const Ranking = () => {
             <p className="text-red-600 dark:text-red-400 mb-4">
               {error}
             </p>
-            <button 
-              onClick={() => window.location.reload()} 
+            <button
+              onClick={() => window.location.reload()}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
             >
               Reintentar
@@ -92,7 +109,7 @@ const Ranking = () => {
               Cargando ranking desde JSON...
             </p>
           </div>
-          
+
           <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 animate-pulse">
@@ -130,12 +147,29 @@ const Ranking = () => {
           <p className="text-gray-600 dark:text-gray-300 text-sm">
             Top 5 carreras con mayor material académico
           </p>
-          
+
           {/* Status actualización */}
           {rankingData && (
             <div className="mt-4 inline-flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full text-xs text-gray-600 dark:text-gray-400">
               <ClockIcon className="w-3 h-3" />
               Actualizado: {new Date(rankingData.lastUpdate).toLocaleDateString('es-ES')}
+            </div>
+          )}
+
+          {/* Indicador de actualización pendiente */}
+          {updateStatus?.needsUpdate && (
+            <div className="mt-4 bg-orange-100 dark:bg-orange-900/20 border border-orange-300 dark:border-orange-700 px-4 py-3 rounded-lg animate-fade-in">
+              <div className="flex items-center gap-2 text-sm">
+                <ArrowPathIcon className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                <div className="flex-1">
+                  <p className="font-semibold text-orange-800 dark:text-orange-200">
+                    ⚠️ Actualización disponible
+                  </p>
+                  <p className="text-xs text-orange-700 dark:text-orange-300">
+                    Se detectaron cambios significativos en los archivos
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -144,9 +178,9 @@ const Ranking = () => {
         <div className="space-y-3">
           {careerData.map((career) => (
             <div key={career.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 transition-all duration-200 hover:shadow-md">
-              
+
               {/* Vista colapsada - minimalista */}
-              <div 
+              <div
                 className="p-4 cursor-pointer flex items-center justify-between"
                 onClick={() => toggleCard(career.id)}
               >
@@ -158,7 +192,7 @@ const Ranking = () => {
                     </span>
                     <span className="text-2xl">{career.icon}</span>
                   </div>
-                  
+
                   {/* Nombre de carrera */}
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
@@ -166,7 +200,7 @@ const Ranking = () => {
                     </h3>
                   </div>
                 </div>
-                
+
                 {/* Stats básicos */}
                 <div className="flex items-center space-x-6">
                   <div className="text-right">
@@ -181,7 +215,7 @@ const Ranking = () => {
                       {career.totalScore.toLocaleString()}
                     </div>
                   </div>
-                  
+
                   {/* Icono expandir/colapsar */}
                   <div className="text-gray-400 dark:text-gray-500">
                     {expandedCards.has(career.id) ? (
@@ -197,12 +231,12 @@ const Ranking = () => {
               {expandedCards.has(career.id) && (
                 <div className="px-4 pb-4 border-t border-gray-100 dark:border-gray-700">
                   <div className="pt-4 space-y-4">
-                    
+
                     {/* Facultad */}
                     <div className="text-xs text-gray-500 dark:text-gray-400">
                       🏛️ {career.facultyName}
                     </div>
-                    
+
                     {/* Desglose de tipos de archivos */}
                     <div className="grid grid-cols-4 gap-3">
                       <div className="text-center p-2 bg-red-50 dark:bg-red-900/20 rounded-md">
@@ -212,7 +246,7 @@ const Ranking = () => {
                         </div>
                         <div className="text-xs text-red-700 dark:text-red-300">PDFs</div>
                       </div>
-                      
+
                       <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded-md">
                         <DocumentIcon className="w-5 h-5 text-blue-500 mx-auto mb-1" />
                         <div className="text-sm font-medium text-blue-600 dark:text-blue-400">
@@ -220,7 +254,7 @@ const Ranking = () => {
                         </div>
                         <div className="text-xs text-blue-700 dark:text-blue-300">Word</div>
                       </div>
-                      
+
                       <div className="text-center p-2 bg-orange-50 dark:bg-orange-900/20 rounded-md">
                         <PresentationChartBarIcon className="w-5 h-5 text-orange-500 mx-auto mb-1" />
                         <div className="text-sm font-medium text-orange-600 dark:text-orange-400">
@@ -228,7 +262,7 @@ const Ranking = () => {
                         </div>
                         <div className="text-xs text-orange-700 dark:text-orange-300">PPT</div>
                       </div>
-                      
+
                       <div className="text-center p-2 bg-purple-50 dark:bg-purple-900/20 rounded-md">
                         <PhotoIcon className="w-5 h-5 text-purple-500 mx-auto mb-1" />
                         <div className="text-sm font-medium text-purple-600 dark:text-purple-400">
@@ -237,7 +271,7 @@ const Ranking = () => {
                         <div className="text-xs text-purple-700 dark:text-purple-300">Imágenes</div>
                       </div>
                     </div>
-                    
+
                     {/* Información adicional */}
                     <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
                       <span>📁 {career.foldersProcessed} carpetas procesadas</span>
