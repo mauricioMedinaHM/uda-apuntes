@@ -51,19 +51,20 @@ const TopCareerWidget = () => {
   }
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200">
+    <div className="rounded-lg border transition-all duration-200" style={{ background: '#0F2A34', borderColor: 'rgba(38,119,141,0.25)' }}>
       {/* Header */}
-      <div className="p-4 pb-3 border-b border-gray-200 dark:border-gray-600">
+      <div className="p-4 pb-3 border-b" style={{ borderColor: 'rgba(38,119,141,0.2)' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-lg">🏆</span>
-            <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+            <span className="text-sm font-medium" style={{ color: 'rgba(252,251,247,0.6)' }}>
               Top 3 carreras con más apuntes
             </span>
           </div>
-          <Link 
-            to="/ranking" 
-            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium hover:underline text-sm"
+          <Link
+            to="/ranking"
+            className="text-sm font-medium hover:underline"
+            style={{ color: '#4DADC4' }}
           >
             Ver ranking completo →
           </Link>
@@ -78,20 +79,20 @@ const TopCareerWidget = () => {
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-lg">{getRankEmoji(index)}</span>
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 hidden sm:inline">
+                <span className="text-xs font-medium hidden sm:inline" style={{ color: 'rgba(252,251,247,0.4)' }}>
                   {getRankText(index)}
                 </span>
               </div>
               <div className="flex items-center gap-2 min-w-0 flex-1">
                 <span className="text-lg flex-shrink-0">{career.icon}</span>
-                <span className="font-medium text-gray-900 dark:text-white truncate text-sm">
+                <span className="font-medium text-white truncate text-sm">
                   {career.name}
                 </span>
               </div>
             </div>
-            
+
             {/* Right side - Score and File count */}
-            <div className="text-sm text-gray-600 dark:text-gray-400 flex-shrink-0 text-right">
+            <div className="text-sm flex-shrink-0 text-right" style={{ color: 'rgba(252,251,247,0.5)' }}>
               <div className="font-medium">{career.totalScore} pts</div>
               <div className="text-xs">📁 {career.totalFiles?.toLocaleString()}</div>
             </div>

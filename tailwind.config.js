@@ -8,12 +8,14 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#00B8D4',
-        secondary: '#0097A7',
-        accent: '#00ACC1',
+        primary:   '#26778D',  // Logo teal exact: RGB(38,119,141)
+        secondary: '#1A5E72',  // Darker teal
+        accent:    '#4DADC4',  // Lighter teal for highlights
+        cream:     '#FCFBF7',  // Logo cream: RGB(252,251,247)
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans:    ['"Be Vietnam Pro"', 'system-ui', 'sans-serif'],
+        display: ['"Be Vietnam Pro"', 'system-ui', 'sans-serif'],
       },
     },
   },

@@ -1,6 +1,5 @@
 import express from 'express';
 import { clerkMiddleware, getAuth, clerkClient } from '@clerk/express';
-import archiver from 'archiver';
 import axios from 'axios';
 
 const router = express.Router();
@@ -188,7 +187,8 @@ router.get('/download-zip', async (req, res) => {
         res.setHeader('Content-Type', 'application/zip');
         res.setHeader('Content-Disposition', `attachment; filename="favoritos-${Date.now()}.zip"`);
 
-        // Create ZIP archive
+        // Create ZIP archive (lazy import to avoid blocking server startup)
+        const { default: archiver } = await import('archiver');
         const archive = archiver('zip', {
             zlib: { level: 9 } // Maximum compression
         });

@@ -5,11 +5,6 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import driveRoutes from './routes/drive.js';
-import apuntesRoutes from './routes/apuntes.js';
-import favoritesRoutes from './routes/favorites.js';
-import uploadRoutes from './routes/upload.js';
-import rankingAutoUpdateRoutes from './routes/rankingAutoUpdate.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -19,10 +14,11 @@ app.use(helmet({
   contentSecurityPolicy: false, // Disable for development
 }));
 
-// Rate limiting
+// Rate limiting — file browser generates several requests per navigation,
+// so keep limit generous while still protecting against abuse
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 600, // ~40 folder navigations per minute per IP
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -49,10 +45,23 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Load routes dynamically to avoid blocking startup
+console.log('Loading routes...');
+const { default: driveRoutes } = await import('./routes/drive.js');
+console.log('drive OK');
+const { default: apuntesRoutes } = await import('./routes/apuntes.js');
+console.log('apuntes OK');
+const { default: favoritesRoutes } = await import('./routes/favorites.js');
+console.log('favorites OK');
+const { default: uploadRoutes } = await import('./routes/upload.js');
+console.log('upload OK');
+const { default: rankingAutoUpdateRoutes } = await import('./routes/rankingAutoUpdate.js');
+console.log('rankingAutoUpdate OK');
+
 // Drive API routes
 app.use('/api/drive', driveRoutes);
 
-// Apuntes API routes (Cloudflare// API Routes
+// API Routes
 app.use('/api/apuntes', apuntesRoutes);
 app.use('/api/favorites', favoritesRoutes);
 app.use('/api/upload', uploadRoutes);
@@ -76,4 +85,8 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
+  console.log(`✅ Server running on http://localhost:${PORT}`);
+}).on('error', (err) => {
+  console.error('❌ Server error:', err.message);
+  process.exit(1);
 });

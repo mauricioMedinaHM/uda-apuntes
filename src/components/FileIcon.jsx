@@ -16,14 +16,14 @@ import {
 
 const FileIcon = ({ mimeType, fileName, isFolder, size = "w-8 h-8" }) => {
   if (isFolder) {
-    return <FolderIcon className={`${size} text-blue-500`} />;
+    return <FolderIcon className={`${size} text-[#26778D]`} />;
   }
 
   const getIconByMimeType = (mimeType, fileName) => {
     // Folder
     if (mimeType === 'application/vnd.google-apps.folder' || 
         mimeType === 'application/vnd.cloudflare.folder') {
-      return <FolderIcon className={`${size} text-blue-500`} />;
+      return <FolderIcon className={`${size} text-[#26778D]`} />;
     }
 
     // Documents
@@ -31,7 +31,7 @@ const FileIcon = ({ mimeType, fileName, isFolder, size = "w-8 h-8" }) => {
         mimeType?.includes('application/msword') ||
         mimeType?.includes('application/vnd.openxmlformats-officedocument.wordprocessingml') ||
         fileName?.match(/\.(doc|docx|txt|rtf)$/i)) {
-      return <DocumentTextIcon className={`${size} text-blue-600`} />;
+      return <DocumentTextIcon className={`${size} text-[#26778D]`} />;
     }
 
     // PDF

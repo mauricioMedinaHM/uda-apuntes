@@ -86,7 +86,7 @@ const Ranking = () => {
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+              className="text-white px-4 py-2 rounded-lg" style={{ background: '#26778D' }}
             >
               Reintentar
             </button>
@@ -211,7 +211,7 @@ const Ranking = () => {
                   </div>
                   <div className="text-right">
                     <div className="text-xs text-gray-500 dark:text-gray-400">Puntos</div>
-                    <div className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                    <div className="text-sm font-medium text-[#26778D] dark:text-[#4DADC4]">
                       {career.totalScore.toLocaleString()}
                     </div>
                   </div>
@@ -247,12 +247,12 @@ const Ranking = () => {
                         <div className="text-xs text-red-700 dark:text-red-300">PDFs</div>
                       </div>
 
-                      <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded-md">
-                        <DocumentIcon className="w-5 h-5 text-blue-500 mx-auto mb-1" />
-                        <div className="text-sm font-medium text-blue-600 dark:text-blue-400">
+                      <div className="text-center p-2 rounded-md" style={{ background: 'rgba(38,119,141,0.12)' }}>
+                        <DocumentIcon className="w-5 h-5 text-[#26778D] mx-auto mb-1" />
+                        <div className="text-sm font-medium text-[#26778D] dark:text-[#4DADC4]">
                           {career.fileTypes.word.toLocaleString()}
                         </div>
-                        <div className="text-xs text-blue-700 dark:text-blue-300">Word</div>
+                        <div className="text-xs text-[#26778D] dark:text-[#4DADC4]">Word</div>
                       </div>
 
                       <div className="text-center p-2 bg-orange-50 dark:bg-orange-900/20 rounded-md">

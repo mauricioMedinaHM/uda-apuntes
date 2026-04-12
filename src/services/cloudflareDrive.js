@@ -39,6 +39,40 @@ export const listCloudflareFiles = async (folderPath = '') => {
 };
 
 /**
+ * List files/folders with folder content counts (totalArchivos + totalCarpetas).
+ * Uses the /api/apuntes/with-counts endpoint which computes counts server-side
+ * in parallel — no N+1 HTTP round trips from the browser.
+ * Falls back to the standard endpoint if with-counts is unavailable.
+ */
+export const listCloudflareFilesWithCounts = async (folderPath = '') => {
+  const prefix = folderPath && !folderPath.endsWith('/') ? `${folderPath}/` : folderPath;
+
+  try {
+    const url = `${API_BASE_URL || ''}/api/apuntes/with-counts?prefix=${encodeURIComponent(prefix)}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+    });
+
+    if (!response.ok) {
+      // Fallback to standard endpoint if with-counts not available yet
+      if (response.status === 404) {
+        console.warn('[cloudflareDrive] /with-counts not available, falling back to /api/apuntes');
+        return listCloudflareFiles(folderPath);
+      }
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.archivos || [];
+  } catch (error) {
+    console.error('Error fetching Cloudflare files with counts:', error);
+    return [];
+  }
+};
+
+/**
  * Search files in Cloudflare
  */
 export const searchCloudflareFiles = async (folderPath, searchTerm) => {

@@ -1,14 +1,41 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { MagnifyingGlassIcon, Bars3Icon, XMarkIcon, SunIcon, MoonIcon } from '@heroicons/react/24/outline'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import {
+  Search,
+  Menu,
+  X,
+  Sun,
+  Moon,
+  Home,
+  FolderOpen,
+  Trophy,
+  Network,
+  Info,
+  Phone,
+  BookOpen,
+  Coffee,
+  LogIn,
+} from 'lucide-react'
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react'
 import { useSearch } from '../context/SearchContext'
 import { useDarkMode } from '../contexts/DarkModeContext'
+
+// Logo teal: #26778D  |  Dark bg: #081920  |  Cream: #FCFBF7
+
+const NAV_LINKS = [
+  { to: '/', label: 'Inicio', Icon: Home },
+  { to: '/archivos', label: 'Archivos', Icon: FolderOpen },
+  { to: '/ranking', label: 'Ranking', Icon: Trophy },
+  { to: '/graph', label: 'Grafo', Icon: Network },
+  { to: '/information', label: 'Información', Icon: Info },
+  { to: '/contact', label: 'Contacto', Icon: Phone },
+]
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const navigate = useNavigate()
+  const location = useLocation()
   const { performSearch } = useSearch()
   const { isDarkMode, toggleDarkMode } = useDarkMode()
 
@@ -22,225 +49,229 @@ const Header = () => {
     }
   }
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen)
-  }
+  const isActive = (path) =>
+    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path)
 
   return (
-    <header className="bg-white dark:bg-gray-800 sticky top-0 z-50 border-b border-gray-200 dark:border-gray-700">
+    <header
+      className="sticky top-0 z-50 border-b"
+      style={{
+        background: 'rgba(8, 25, 32, 0.93)',
+        backdropFilter: 'blur(16px)',
+        borderColor: 'rgba(38, 119, 141, 0.3)',
+      }}
+    >
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between py-4">
-          <Link to="/" className="flex items-center space-x-4 group">
-            <div className="w-14 h-14 flex items-center justify-center group-hover:scale-105 transition-all duration-300">
-              <img
-                src="/Logo.png"
-                alt="APUNTES UDA"
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <div>
-              <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-0 pb-0 pt-2">APUNTES UDA</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-300 font-medium">Por y para los estudiantes</p>
+        <div className="flex items-center justify-between h-16">
+
+          {/* Brand */}
+          <Link to="/" className="flex items-center gap-3 group flex-shrink-0">
+            <img
+              src="/Logo.png"
+              alt="APUNTES UDA"
+              className="w-9 h-9 object-contain transition-transform duration-300 group-hover:scale-105"
+              style={{ filter: 'drop-shadow(0 0 8px rgba(38,119,141,0.5))' }}
+            />
+            <div className="hidden sm:block">
+              <span className="text-lg font-black text-white tracking-tight leading-none">
+                APUNTES UDA
+              </span>
             </div>
           </Link>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3">
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-1">
+            {NAV_LINKS.map(({ to, label }) => (
+              <Link
+                key={to}
+                to={to}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  isActive(to)
+                    ? 'text-white'
+                    : 'hover:text-white hover:bg-white/5'
+                }`}
+                style={
+                  isActive(to)
+                    ? { color: '#4DADC4', background: 'rgba(38,119,141,0.12)' }
+                    : { color: 'rgba(252,251,247,0.5)' }
+                }
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Desktop actions */}
+          <div className="hidden md:flex items-center gap-2">
+
+            {/* Dark mode */}
             <button
               onClick={toggleDarkMode}
-              className="hidden md:flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200"
-              title={isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+              className="flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-200 hover:bg-white/5"
+              style={{ color: 'rgba(252,251,247,0.5)' }}
+              title={isDarkMode ? 'Modo claro' : 'Modo oscuro'}
             >
-              {isDarkMode ? (
-                <SunIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-              ) : (
-                <MoonIcon className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-              )}
+              {isDarkMode ? <Sun className="w-4 h-4" strokeWidth={1.75} /> : <Moon className="w-4 h-4" strokeWidth={1.75} />}
             </button>
-            <div className="hidden md:flex items-center gap-2">
-              <SignedOut>
-                <SignInButton mode="modal">
-                  <span className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-all duration-200 hover:-translate-y-0.5">
-                    Ingresar
-                  </span>
-                </SignInButton>
-              </SignedOut>
-              <SignedIn>
-                <UserButton />
-              </SignedIn>
-            </div>
+
+            {/* Donate */}
             <a
               href="https://cafecito.app/apuntesuda"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden md:flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:-translate-y-0.5"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
+              style={{ color: 'rgba(252,251,247,0.7)', border: '1px solid rgba(252,251,247,0.12)' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(252,251,247,0.06)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
-              ☕ Donar
+              <Coffee className="w-3.5 h-3.5" strokeWidth={2} />
+              Donar
             </a>
+
+            {/* Add notes */}
             <a
               href="https://drive.google.com/drive/folders/1oOYF9Od5NeSErp7lokq95pQ37voukBvu?usp=sharing"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden md:flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:-translate-y-0.5"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
+              style={{ color: '#4DADC4', border: '1px solid rgba(38,119,141,0.3)', background: 'rgba(38,119,141,0.08)' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(38,119,141,0.15)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(38,119,141,0.08)'}
             >
-              📚 Agrega tus apuntes
+              <BookOpen className="w-3.5 h-3.5" strokeWidth={2} />
+              Agregar apuntes
             </a>
+
+            {/* Auth */}
+            <SignedOut>
+              <SignInButton mode="modal">
+                <button
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-white transition-all duration-200"
+                  style={{ background: '#26778D' }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#2E8FA6'}
+                  onMouseLeave={e => e.currentTarget.style.background = '#26778D'}
+                >
+                  <LogIn className="w-3.5 h-3.5" strokeWidth={2} />
+                  Ingresar
+                </button>
+              </SignInButton>
+            </SignedOut>
+            <SignedIn>
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: 'w-8 h-8',
+                    userButtonTrigger: 'hover:opacity-80 transition-opacity',
+                  },
+                }}
+              />
+            </SignedIn>
           </div>
 
-          <div className="hidden md:flex items-center space-x-6">
-            <nav className="flex space-x-1">
-              <Link
-                to="/"
-                className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                Inicio
-              </Link>
-              <Link
-                to="/archivos"
-                className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                Archivos
-              </Link>
-              <Link
-                to="/ranking"
-                className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                Ranking
-              </Link>
-              <Link
-                to="/information"
-                className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                Información
-              </Link>
-              <Link
-                to="/contact"
-                className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                Contacto
-              </Link>
-            </nav>
-          </div>
-
+          {/* Mobile hamburger */}
           <button
-            onClick={toggleMenu}
-            className="md:hidden p-3 rounded-xl hover:bg-blue-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-sm"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="md:hidden p-2 rounded-lg transition-all duration-200 hover:bg-white/5"
+            style={{ color: 'rgba(252,251,247,0.5)' }}
           >
-            {isMenuOpen ? (
-              <XMarkIcon className="h-6 w-6 text-gray-700 dark:text-gray-300" />
-            ) : (
-              <Bars3Icon className="h-6 w-6 text-gray-700 dark:text-gray-300" />
-            )}
+            {isMenuOpen ? <X className="w-5 h-5" strokeWidth={2} /> : <Menu className="w-5 h-5" strokeWidth={2} />}
           </button>
         </div>
 
+        {/* Mobile menu */}
         {isMenuOpen && (
-          <div className="md:hidden pb-6 border-t border-gray-200 dark:border-gray-700 animate-slide-in">
-            <div className="pt-6">
-              <form onSubmit={handleSearch} className="relative mb-6">
-                <input
-                  type="text"
-                  placeholder="Buscar apuntes..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-4 py-3 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
-              </form>
+          <div
+            className="md:hidden border-t pb-6"
+            style={{ borderColor: 'rgba(38,119,141,0.2)' }}
+          >
+            {/* Search */}
+            <form onSubmit={handleSearch} className="relative mt-4 mb-4">
+              <input
+                type="text"
+                placeholder="Buscar apuntes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2.5 pl-10 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none transition-all duration-200"
+                style={{
+                  background: '#0F2A34',
+                  border: '1px solid rgba(38,119,141,0.3)',
+                }}
+              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'rgba(38,119,141,0.6)' }} strokeWidth={1.75} />
+            </form>
 
-              {/* Mobile Dark Mode Toggle */}
-              <div className="flex gap-3 mb-6">
-                <button
-                  onClick={toggleDarkMode}
-                  className="flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-3 rounded-lg font-medium transition-all duration-200"
-                >
-                  {isDarkMode ? (
-                    <>
-                      <SunIcon className="w-5 h-5" />
-                      Modo claro
-                    </>
-                  ) : (
-                    <>
-                      <MoonIcon className="w-5 h-5" />
-                      Modo oscuro
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* Mobile Action Buttons */}
-              <div className="flex flex-col gap-3 mb-6">
-                <div className="flex">
-                  <SignedOut>
-                    <SignInButton mode="modal">
-                      <span className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-all duration-200">
-                        Ingresar
-                      </span>
-                    </SignInButton>
-                  </SignedOut>
-                  <SignedIn>
-                    <div className="flex-1 flex items-center justify-center">
-                      <UserButton />
-                    </div>
-                  </SignedIn>
+            {/* Mobile action row */}
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={toggleDarkMode}
+                className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all flex-1 justify-center"
+                style={{ color: 'rgba(252,251,247,0.6)', border: '1px solid rgba(38,119,141,0.2)', background: '#0F2A34' }}
+              >
+                {isDarkMode ? <Sun className="w-4 h-4" strokeWidth={1.75} /> : <Moon className="w-4 h-4" strokeWidth={1.75} />}
+                {isDarkMode ? 'Modo claro' : 'Modo oscuro'}
+              </button>
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-white transition-all flex-1 justify-center"
+                    style={{ background: '#26778D' }}
+                  >
+                    <LogIn className="w-4 h-4" strokeWidth={2} />
+                    Ingresar
+                  </button>
+                </SignInButton>
+              </SignedOut>
+              <SignedIn>
+                <div className="flex items-center justify-center flex-1">
+                  <UserButton />
                 </div>
-                <a
-                  href="https://cafecito.app/apuntesuda"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-3 rounded-lg font-medium transition-all duration-200"
-                >
-                  ☕ Donar
-                </a>
-                <a
-                  href="https://drive.google.com/drive/folders/1oOYF9Od5NeSErp7lokq95pQ37voukBvu?usp=sharing"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-all duration-200"
-                >
-                  📚 Agrega apuntes
-                </a>
-              </div>
-
-              <nav className="flex flex-col space-y-2">
-                <Link
-                  to="/"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 font-medium"
-                >
-                  🏠 Inicio
-                </Link>
-                <Link
-                  to="/archivos"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 font-medium"
-                >
-                  📁 Archivos
-                </Link>
-                <Link
-                  to="/ranking"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 font-medium"
-                >
-                  🏆 Ranking
-                </Link>
-                <Link
-                  to="/information"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 font-medium"
-                >
-                  ℹ️ Información
-                </Link>
-                <Link
-                  to="/contact"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="block px-4 py-3 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-all duration-200 font-medium"
-                >
-                  📞 Contacto
-                </Link>
-              </nav>
+              </SignedIn>
             </div>
+
+            {/* Donate + Add notes */}
+            <div className="flex gap-2 mb-4">
+              <a
+                href="https://cafecito.app/apuntesuda"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex-1"
+                style={{ color: 'rgba(252,251,247,0.7)', border: '1px solid rgba(252,251,247,0.12)' }}
+              >
+                <Coffee className="w-4 h-4" strokeWidth={2} />
+                Donar
+              </a>
+              <a
+                href="https://drive.google.com/drive/folders/1oOYF9Od5NeSErp7lokq95pQ37voukBvu?usp=sharing"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all flex-1"
+                style={{ color: '#4DADC4', border: '1px solid rgba(38,119,141,0.3)', background: 'rgba(38,119,141,0.08)' }}
+              >
+                <BookOpen className="w-4 h-4" strokeWidth={2} />
+                Agregar
+              </a>
+            </div>
+
+            {/* Mobile nav links */}
+            <nav className="flex flex-col gap-1">
+              {NAV_LINKS.map(({ to, label, Icon }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200`}
+                  style={
+                    isActive(to)
+                      ? { color: '#4DADC4', background: 'rgba(38,119,141,0.12)', border: '1px solid rgba(38,119,141,0.2)' }
+                      : { color: 'rgba(252,251,247,0.5)' }
+                  }
+                >
+                  <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.75} />
+                  {label}
+                </Link>
+              ))}
+            </nav>
           </div>
         )}
       </div>

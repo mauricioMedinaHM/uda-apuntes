@@ -15,6 +15,7 @@ const SubjectView = lazy(() => import('./pages/SubjectView'))
 const Information = lazy(() => import('./pages/Information'))
 const Contact = lazy(() => import('./pages/Contact'))
 const SearchResults = lazy(() => import('./pages/SearchResults'))
+const GraphView = lazy(() => import('./pages/GraphView'))
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
                   <Route path="/program/:programId/year/:yearId" element={<SubjectView />} />
                   <Route path="/information" element={<Information />} />
                   <Route path="/contact" element={<Contact />} />
+                  <Route path="/graph" element={<GraphView />} />
                 </Routes>
               </Suspense>
             </main>

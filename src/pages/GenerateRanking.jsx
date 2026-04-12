@@ -73,7 +73,7 @@ const GenerateRanking = () => {
             className={`w-full py-3 px-6 rounded-lg text-white font-medium ${
               isGenerating 
                 ? 'bg-gray-400 cursor-not-allowed' 
-                : 'bg-blue-600 hover:bg-blue-700'
+                : 'bg-[#26778D] hover:bg-[#1A5E72]'
             }`}
           >
             {isGenerating ? 'Analizando Google Drive...' : 'Generar Ranking Real'}
@@ -81,10 +81,10 @@ const GenerateRanking = () => {
         </div>
 
         {isGenerating && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-6">
+          <div className="bg-[#0F2A34] dark:bg-[#0F2A34] rounded-lg p-4 mb-6">
             <div className="flex items-center gap-3">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-              <span className="text-blue-800 dark:text-blue-200">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#26778D]"></div>
+              <span className="text-[#4DADC4] dark:text-[#4DADC4]">
                 Analizando carpetas de carreras... Esto puede tomar varios minutos.
               </span>
             </div>

@@ -120,11 +120,11 @@ const GoogleDriveExplorer = ({ isAuthenticated, rootFolderId = null }) => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#26778D]"
         />
         <button
           onClick={handleSearch}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-[#26778D] text-white rounded-md hover:bg-[#1A5E72] transition-colors"
         >
           Buscar
         </button>
@@ -141,7 +141,7 @@ const GoogleDriveExplorer = ({ isAuthenticated, rootFolderId = null }) => {
         <div className="flex items-center gap-2 mb-4 text-sm">
           <button
             onClick={() => handleBreadcrumbClick(-1)}
-            className="text-blue-600 hover:underline"
+            className="text-[#26778D] hover:underline"
           >
             Apuntes UDA
           </button>
@@ -150,7 +150,7 @@ const GoogleDriveExplorer = ({ isAuthenticated, rootFolderId = null }) => {
               <span className="text-gray-400">/</span>
               <button
                 onClick={() => handleBreadcrumbClick(index)}
-                className="text-blue-600 hover:underline"
+                className="text-[#26778D] hover:underline"
               >
                 {crumb.name}
               </button>
@@ -162,7 +162,7 @@ const GoogleDriveExplorer = ({ isAuthenticated, rootFolderId = null }) => {
       {/* Loading State */}
       {loading && (
         <div className="flex items-center justify-center p-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#26778D]"></div>
           <span className="ml-2">Cargando...</span>
         </div>
       )}
@@ -180,7 +180,7 @@ const GoogleDriveExplorer = ({ isAuthenticated, rootFolderId = null }) => {
               >
                 <div className="flex items-center gap-3 flex-1">
                   {isFolder(file) ? (
-                    <FolderIcon className="w-6 h-6 text-blue-500" />
+                    <FolderIcon className="w-6 h-6 text-[#26778D]" />
                   ) : (
                     <DocumentIcon className="w-6 h-6 text-gray-500" />
                   )}
@@ -190,7 +190,7 @@ const GoogleDriveExplorer = ({ isAuthenticated, rootFolderId = null }) => {
                       onClick={() => isFolder(file) ? handleFolderClick(file) : null}
                       className={`text-left font-medium ${
                         isFolder(file) 
-                          ? 'text-blue-600 hover:underline cursor-pointer' 
+                          ? 'text-[#26778D] hover:underline cursor-pointer'
                           : 'text-gray-900'
                       }`}
                     >
@@ -205,7 +205,7 @@ const GoogleDriveExplorer = ({ isAuthenticated, rootFolderId = null }) => {
                 {!isFolder(file) && (
                   <button
                     onClick={() => handleDownload(file)}
-                    className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
+                    className="p-2 text-gray-500 hover:text-[#26778D] transition-colors"
                     title="Descargar archivo"
                   >
                     <CloudArrowDownIcon className="w-5 h-5" />

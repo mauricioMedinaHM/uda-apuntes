@@ -58,7 +58,7 @@ const GoogleDriveAuth = ({ onAuthChange }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#26778D]"></div>
         <span className="ml-2">Autenticando...</span>
       </div>
     );
@@ -88,7 +88,7 @@ const GoogleDriveAuth = ({ onAuthChange }) => {
           </p>
           <button
             onClick={handleLogin}
-            className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center"
+            className="px-6 py-3 text-white rounded-md transition-colors flex items-center" style={{ background: '#26778D' }} onMouseEnter={e => e.currentTarget.style.background='#1A5E72'} onMouseLeave={e => e.currentTarget.style.background='#26778D'}
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
               <path

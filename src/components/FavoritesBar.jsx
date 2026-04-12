@@ -58,7 +58,7 @@ const FavoritesBar = ({ favorites, onFavoritesChange, onPreview }) => {
                 <button
                     onClick={handleDownloadAll}
                     disabled={downloading}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors text-sm"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#26778D] hover:bg-[#1A5E72] disabled:bg-[#26778D]/50 text-white rounded-lg font-medium transition-colors text-sm"
                 >
                     <ArrowDownTrayIcon className="w-4 h-4" />
                     {downloading ? 'Descargando...' : 'Descargar Todo (ZIP)'}
@@ -69,7 +69,7 @@ const FavoritesBar = ({ favorites, onFavoritesChange, onPreview }) => {
                 {favorites.map((favorite) => (
                     <div
                         key={favorite.id}
-                        className="group relative flex-shrink-0 bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 transition-all cursor-pointer min-w-[180px]"
+                        className="group relative flex-shrink-0 bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600 hover:border-[#26778D] transition-all cursor-pointer min-w-[180px]"
                         onClick={() => onPreview && onPreview({
                             id: favorite.file_id,
                             name: favorite.file_name,

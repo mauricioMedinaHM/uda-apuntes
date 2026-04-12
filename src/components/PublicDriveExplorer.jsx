@@ -121,11 +121,11 @@ const PublicDriveExplorer = ({ rootFolderId }) => {
               value={searchTerm}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-60 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#26778D] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             />
             <button
               onClick={handleSearch}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="px-6 py-2 bg-[#26778D] text-white rounded-lg hover:bg-[#1A5E72] transition-colors font-medium"
             >
               Buscar
             </button>
@@ -145,7 +145,7 @@ const PublicDriveExplorer = ({ rootFolderId }) => {
               onClick={() => setViewMode('grid')}
               className={`flex items-center px-3 py-2 rounded-md transition-colors ${
                 viewMode === 'grid'
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-[#26778D] text-white'
                   : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
               }`}
               title="Vista en cuadrícula"
@@ -157,7 +157,7 @@ const PublicDriveExplorer = ({ rootFolderId }) => {
               onClick={() => setViewMode('list')}
               className={`flex items-center px-3 py-2 rounded-md transition-colors ${
                 viewMode === 'list'
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-[#26778D] text-white'
                   : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
               }`}
               title="Vista en lista"
@@ -173,7 +173,7 @@ const PublicDriveExplorer = ({ rootFolderId }) => {
           <div className="flex items-center gap-2 mb-6 text-sm overflow-x-auto scrollbar-hide">
             <button
               onClick={() => handleBreadcrumbClick(-1)}
-              className="text-blue-600 dark:text-blue-400 hover:underline font-medium whitespace-nowrap flex-shrink-0"
+              className="text-[#26778D] dark:text-[#4DADC4] hover:underline font-medium whitespace-nowrap flex-shrink-0"
             >
               📚 Inicio
             </button>
@@ -182,7 +182,7 @@ const PublicDriveExplorer = ({ rootFolderId }) => {
                 <span className="text-gray-400">›</span>
                 <button
                   onClick={() => handleBreadcrumbClick(index)}
-                  className="text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap"
+                  className="text-[#26778D] dark:text-[#4DADC4] hover:underline whitespace-nowrap"
                 >
                   {crumb.name}
                 </button>
@@ -207,7 +207,7 @@ const PublicDriveExplorer = ({ rootFolderId }) => {
         {/* Loading State */}
         {loading && (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#26778D]"></div>
             <span className="ml-3 text-gray-600 dark:text-gray-300">Cargando archivos...</span>
           </div>
         )}
@@ -234,7 +234,7 @@ const PublicDriveExplorer = ({ rootFolderId }) => {
                     <div className="flex items-center gap-3 mb-3">
                       {isFolder(file) ? (
                         <div className="flex-shrink-0">
-                          <FolderIcon className="w-8 h-8 text-blue-500" />
+                          <FolderIcon className="w-8 h-8 text-[#26778D]" />
                         </div>
                       ) : (
                         <div className="flex-shrink-0">
@@ -247,19 +247,19 @@ const PublicDriveExplorer = ({ rootFolderId }) => {
                       )}
                     </div>
                     
-                    <h3 className="font-medium text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    <h3 className="font-medium text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-[#26778D] dark:group-hover:text-[#4DADC4] transition-colors">
                       {file.name}
                     </h3>
                     
                     <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
                       {isFolder(file) && folderFileCounts[file.id] !== undefined && (
-                        <div className="text-blue-600 dark:text-blue-400 font-medium">
+                        <div className="text-[#26778D] dark:text-[#4DADC4] font-medium">
                           {folderFileCounts[file.id]} archivos
                         </div>
                       )}
                       {file.size && <div>{formatFileSize(file.size)}</div>}
                       {file.modifiedTime && <div>{formatDate(file.modifiedTime)}</div>}
-                      <div className="text-blue-600 dark:text-blue-400 font-medium">
+                      <div className="text-[#26778D] dark:text-[#4DADC4] font-medium">
                         {isFolder(file) ? 'Abrir carpeta' : 'Ver archivo'}
                       </div>
                     </div>
@@ -277,19 +277,19 @@ const PublicDriveExplorer = ({ rootFolderId }) => {
                   >
                     <div className="flex-shrink-0">
                       {isFolder(file) ? (
-                        <FolderIcon className="w-6 h-6 text-blue-500" />
+                        <FolderIcon className="w-6 h-6 text-[#26778D]" />
                       ) : (
                         <DocumentIcon className="w-6 h-6 text-gray-500" />
                       )}
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+                      <h3 className="font-medium text-gray-900 dark:text-white group-hover:text-[#26778D] dark:group-hover:text-[#4DADC4] transition-colors truncate">
                         {file.name}
                       </h3>
                       <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 mt-1">
                         {isFolder(file) && folderFileCounts[file.id] !== undefined && (
-                          <span className="text-blue-600 dark:text-blue-400 font-medium">
+                          <span className="text-[#26778D] dark:text-[#4DADC4] font-medium">
                             {folderFileCounts[file.id]} archivos
                           </span>
                         )}
@@ -299,7 +299,7 @@ const PublicDriveExplorer = ({ rootFolderId }) => {
                     </div>
                     
                     <div className="flex-shrink-0 flex items-center gap-2">
-                      <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                      <span className="text-xs text-[#26778D] dark:text-[#4DADC4] font-medium">
                         {isFolder(file) ? 'Abrir carpeta' : 'Ver archivo'}
                       </span>
                       {!isFolder(file) && (

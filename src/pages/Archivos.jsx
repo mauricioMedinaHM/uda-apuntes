@@ -54,12 +54,12 @@ const Archivos = () => {
         <div className="min-h-screen bg-white dark:bg-gray-900">
             <div className="container mx-auto px-4 py-8">
                 {/* Page Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-2">
-                        📚 Explorador de Archivos
+                <div className="mb-6">
+                    <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mb-1">
+                        📚 Apuntes y Materiales
                     </h1>
-                    <p className="text-gray-600 dark:text-gray-300">
-                        Navega y busca archivos del bucket de Cloudflare R2
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">
+                        Selecciona tu facultad y carrera para encontrar los archivos
                     </p>
                 </div>
 

@@ -34,14 +34,26 @@ export const getFavorites = async (token) => {
  */
 export const addFavorite = async (file, token) => {
     try {
+        // Ensure we have the required fields with fallbacks
+        const fileId = file.id || file.path;
+        const fileName = file.name || file.nombre || 'Unknown';
+        const fileUrl = file.url || '';
+        const fileSize = file.size || file.tamaño || 0;
+        const mimeType = file.mimeType || 'application/octet-stream';
+
+        if (!fileId || !fileUrl) {
+            console.error('Missing required file data:', { fileId, fileUrl, file });
+            throw new Error('Missing required file data for favorite');
+        }
+
         const response = await axios.post(
             `${API_URL}/api/favorites`,
             {
-                fileId: file.id || file.path,
-                fileName: file.name,
-                fileUrl: file.url,
-                fileSize: file.size,
-                mimeType: file.mimeType
+                fileId,
+                fileName,
+                fileUrl,
+                fileSize,
+                mimeType
             },
             {
                 headers: {
@@ -56,7 +68,7 @@ export const addFavorite = async (file, token) => {
             console.log('File already in favorites');
             return null;
         }
-        console.error('Error adding favorite:', error);
+        console.error('Error adding favorite:', error.response?.data || error.message);
         throw error;
     }
 };

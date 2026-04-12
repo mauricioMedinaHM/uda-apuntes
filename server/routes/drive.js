@@ -1,11 +1,10 @@
 import express from 'express';
-import { google } from 'googleapis';
 
 const router = express.Router();
 
-// Initialize Google Drive API with service account or API key
-const initializeDrive = () => {
-  // For public files, we'll use API key authentication
+// Initialize Google Drive API with service account or API key (lazy import to avoid blocking startup)
+const initializeDrive = async () => {
+  const { google } = await import('googleapis');
   return google.drive({
     version: 'v3',
     auth: process.env.GOOGLE_API_KEY
@@ -36,8 +35,8 @@ router.get('/files/:folderId?', async (req, res) => {
       });
     }
 
-    const drive = initializeDrive();
-    
+    const drive = await initializeDrive();
+
     const query = `'${folderId}' in parents and trashed=false`;
     
     const response = await drive.files.list({
@@ -107,7 +106,7 @@ router.get('/search/:folderId', async (req, res) => {
       });
     }
 
-    const drive = initializeDrive();
+    const drive = await initializeDrive();
     
     // Escape special characters in search term
     const escapedTerm = searchTerm.replace(/'/g, "\\'");
@@ -157,7 +156,7 @@ router.get('/file/:fileId/metadata', async (req, res) => {
       });
     }
 
-    const drive = initializeDrive();
+    const drive = await initializeDrive();
     
     const response = await drive.files.get({
       fileId,

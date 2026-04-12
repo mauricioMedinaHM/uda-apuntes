@@ -180,6 +180,102 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/apuntes/with-counts
+// Same as GET /api/apuntes but each folder includes totalArchivos + totalCarpetas
+// All sub-listings happen in parallel server-side (no N HTTP round trips from browser)
+router.get('/with-counts', async (req, res) => {
+  try {
+    const prefix = req.query.prefix || '';
+
+    // 1. Direct listing (folders + files at this level)
+    const directCommand = new ListObjectsV2Command({
+      Bucket: R2_BUCKET_NAME,
+      Prefix: prefix,
+      Delimiter: '/',
+    });
+    const directData = await S3.send(directCommand);
+
+    const rawCarpetas = (directData.CommonPrefixes || []);
+
+    // 2. For each folder, get its direct contents in parallel (S3-to-S3, fast)
+    const carpetasWithCounts = await Promise.all(
+      rawCarpetas.map(async (commonPrefix) => {
+        const folderPath = commonPrefix.Prefix;
+        const nombreCarpeta = folderPath.replace(prefix, '').replace(/\/$/, '');
+
+        let totalArchivos = 0;
+        let totalCarpetas = 0;
+
+        try {
+          const subCommand = new ListObjectsV2Command({
+            Bucket: R2_BUCKET_NAME,
+            Prefix: folderPath,
+            Delimiter: '/',
+          });
+          const subData = await S3.send(subCommand);
+
+          totalCarpetas = (subData.CommonPrefixes || []).length;
+          totalArchivos = (subData.Contents || []).filter(f => !f.Key.endsWith('/')).length;
+        } catch (err) {
+          console.warn(`[R2] Could not get counts for ${folderPath}:`, err.message);
+        }
+
+        return {
+          id: folderPath,
+          nombre: nombreCarpeta,
+          tipo: 'carpeta',
+          mimeType: 'application/vnd.cloudflare.folder',
+          path: folderPath,
+          isFolder: true,
+          totalArchivos,
+          totalCarpetas,
+        };
+      })
+    );
+
+    // 3. Direct files at this level
+    const archivos = (directData.Contents || [])
+      .filter((file) => {
+        const relativePath = file.Key.replace(prefix, '');
+        return !file.Key.endsWith('/') && !relativePath.includes('/');
+      })
+      .map((file) => {
+        const nombreArchivo = file.Key.split('/').pop();
+        const mimeType = getMimeType(nombreArchivo);
+        const urlPublica = PUBLIC_BASE_URL
+          ? `${PUBLIC_BASE_URL}/${file.Key}`
+          : `https://${R2_BUCKET_NAME}.${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${file.Key}`;
+        return {
+          id: file.Key,
+          nombre: nombreArchivo,
+          tipo: 'archivo',
+          mimeType,
+          tamaño: file.Size,
+          ultimaModificacion: file.LastModified,
+          path: file.Key,
+          url: urlPublica,
+          isFolder: false,
+        };
+      });
+
+    const resultado = [...carpetasWithCounts, ...archivos].sort((a, b) => {
+      if (a.isFolder && !b.isFolder) return -1;
+      if (!a.isFolder && b.isFolder) return 1;
+      return a.nombre.localeCompare(b.nombre);
+    });
+
+    return res.status(200).json({
+      archivos: resultado,
+      prefix,
+      total: resultado.length,
+    });
+
+  } catch (error) {
+    console.error('Error en /api/apuntes/with-counts:', error);
+    return res.status(500).json({ error: 'Error al obtener apuntes con conteos', message: error.message });
+  }
+});
+
 // GET /api/apuntes/count-files
 // Endpoint para contar recursivamente archivos en una carpeta
 router.get('/count-files', async (req, res) => {
@@ -195,6 +291,50 @@ router.get('/count-files', async (req, res) => {
     console.error('Error counting files:', error);
     return res.status(500).json({
       error: "Error al contar archivos",
+      message: error.message
+    });
+  }
+});
+
+// GET /api/apuntes/all-keys
+// Retorna TODAS las rutas de archivos para construir el Knowledge Graph
+router.get('/all-keys', async (req, res) => {
+  try {
+    const allKeys = [];
+    let continuationToken = null;
+
+    do {
+      const command = new ListObjectsV2Command({
+        Bucket: R2_BUCKET_NAME,
+        ContinuationToken: continuationToken,
+      });
+
+      const response = await S3.send(command);
+
+      if (response.Contents) {
+        // Solo archivos (no carpetas)
+        const files = response.Contents
+          .filter(item => !isFolder(item.Key))
+          .map(item => ({
+            key: item.Key,
+            url: PUBLIC_BASE_URL
+              ? `${PUBLIC_BASE_URL}/${item.Key}`
+              : `https://${R2_BUCKET_NAME}.${R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${item.Key}`,
+          }));
+        allKeys.push(...files);
+      }
+
+      continuationToken = response.NextContinuationToken;
+    } while (continuationToken);
+
+    return res.status(200).json({
+      keys: allKeys,
+      total: allKeys.length,
+    });
+  } catch (error) {
+    console.error('Error en /api/apuntes/all-keys:', error);
+    return res.status(500).json({
+      error: "Error al obtener todas las keys",
       message: error.message
     });
   }

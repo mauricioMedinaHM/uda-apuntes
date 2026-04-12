@@ -152,7 +152,8 @@ const FilePreviewModal = ({ file, onClose, favorites = [], onFavoritesChange }) 
                             </p>
                             <button
                                 onClick={handleDownload}
-                                className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                                className="mt-4 px-4 py-2 text-white rounded-lg font-medium transition-colors"
+                                style={{ background: '#26778D' }}
                             >
                                 Abrir archivo
                             </button>
